@@ -187,48 +187,50 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+        className="fixed inset-0 bg-black/20 backdrop-blur-md z-40 transition-all duration-300 ease-out"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-[#F5F5F5] shadow-xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-gradient-to-b from-white via-white to-[#F9FAFB] apple-shadow-lg z-50 overflow-y-auto transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 backdrop-blur-sm">
-          <div className="flex items-start justify-between mb-4">
+        <div className="sticky top-0 z-10 glass-effect border-b border-gray-200/50 px-8 py-6">
+          <div className="flex items-start justify-between mb-5">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                {getStatusIcon(assignment.status)}
-                <h2 className="text-xl font-semibold text-gray-900">{assignment.title}</h2>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-gray-100/80 rounded-2xl">
+                  {getStatusIcon(assignment.status)}
+                </div>
+                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">{assignment.title}</h2>
               </div>
-              <p className="text-gray-500 text-sm">Assignment #{assignment.id.slice(0, 8)}</p>
+              <p className="text-gray-500 text-sm ml-[52px]">Assignment #{assignment.id.slice(0, 8)}</p>
             </div>
             <button
               onClick={onClose}
-              className="ml-4 p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
+              className="ml-4 p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-gray-900 active:scale-95"
             >
               <FiX className="h-5 w-5" />
             </button>
           </div>
 
           {/* Status and Priority Badges */}
-          <div className="flex gap-2">
-            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getStatusBadge(assignment.status)}`}>
+          <div className="flex gap-2.5">
+            <span className={`px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide ${getStatusBadge(assignment.status)} shadow-sm`}>
               {assignment.status.toUpperCase()}
             </span>
-            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getPriorityBadge(assignment.priority)}`}>
+            <span className={`px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide ${getPriorityBadge(assignment.priority)} shadow-sm`}>
               {assignment.priority.toUpperCase()} PRIORITY
             </span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-8 space-y-5">
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="glass-card rounded-3xl apple-shadow p-5">
             <button
               onClick={handleViewOnMap}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
+              className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl font-semibold apple-transition bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-lg hover:shadow-xl"
             >
               <FiMap className="h-5 w-5" />
               View Route on Map
@@ -236,27 +238,29 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
           </div>
 
           {/* Route Information */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiNavigation className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiNavigation className="h-5 w-5 text-gray-700" />
+                </div>
                 Route Details
               </h3>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-6 space-y-5">
               {/* Start Location */}
-              <div className="flex items-start gap-3 pb-4 border-b border-gray-100">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <FiFlag className="h-5 w-5 text-gray-600" />
+              <div className="flex items-start gap-4 pb-5 border-b border-gray-100/50">
+                <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl shadow-sm">
+                  <FiFlag className="h-5 w-5 text-gray-700" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-gray-500 mb-1">Start Location</p>
-                  <p className="text-base font-medium text-gray-900">{assignment.startLocation}</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Start Location</p>
+                  <p className="text-base font-semibold text-gray-900 mb-1">{assignment.startLocation}</p>
                   {startLocationData?.description && (
-                    <p className="text-xs text-gray-500 mt-1">{startLocationData.description}</p>
+                    <p className="text-sm text-gray-500 mt-1.5">{startLocationData.description}</p>
                   )}
                   {startLocationData?.latitude && startLocationData?.longitude && (
-                    <p className="text-xs text-gray-400 mt-1 font-mono">
+                    <p className="text-xs text-gray-400 mt-2 font-mono bg-gray-50/80 px-2 py-1 rounded-lg inline-block">
                       {startLocationData.latitude.toFixed(4)}, {startLocationData.longitude.toFixed(4)}
                     </p>
                   )}
@@ -265,35 +269,35 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
 
               {/* Distance & ETA */}
               {distance && (
-                <div className="flex items-center justify-center gap-6 py-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-center gap-8 py-5 bg-gradient-to-br from-gray-50/80 to-gray-100/50 rounded-2xl shadow-sm">
                   <div className="text-center">
-                    <p className="text-xs text-gray-500 mb-1">Distance</p>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Distance</p>
+                    <p className="text-xl font-bold text-gray-900 tracking-tight">
                       {distance < 1000 ? `${Math.round(distance)} m` : `${(distance / 1000).toFixed(2)} km`}
                     </p>
                   </div>
                   {eta && (
                     <div className="text-center">
-                      <p className="text-xs text-gray-500 mb-1">Est. Arrival</p>
-                      <p className="text-lg font-semibold text-gray-900">{eta}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Est. Arrival</p>
+                      <p className="text-xl font-bold text-gray-900 tracking-tight">{eta}</p>
                     </div>
                   )}
                 </div>
               )}
 
               {/* Destination */}
-              <div className="flex items-start gap-3 pt-2">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <MdLocationOn className="h-5 w-5 text-gray-600" />
+              <div className="flex items-start gap-4 pt-2">
+                <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl shadow-sm">
+                  <MdLocationOn className="h-5 w-5 text-gray-700" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-gray-500 mb-1">Destination</p>
-                  <p className="text-base font-medium text-gray-900">{assignment.destination}</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Destination</p>
+                  <p className="text-base font-semibold text-gray-900 mb-1">{assignment.destination}</p>
                   {destinationData?.description && (
-                    <p className="text-xs text-gray-500 mt-1">{destinationData.description}</p>
+                    <p className="text-sm text-gray-500 mt-1.5">{destinationData.description}</p>
                   )}
                   {destinationData?.latitude && destinationData?.longitude && (
-                    <p className="text-xs text-gray-400 mt-1 font-mono">
+                    <p className="text-xs text-gray-400 mt-2 font-mono bg-gray-50/80 px-2 py-1 rounded-lg inline-block">
                       {destinationData.latitude.toFixed(4)}, {destinationData.longitude.toFixed(4)}
                     </p>
                   )}
@@ -304,14 +308,16 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
 
           {/* Flight Information */}
           {assignment.flightCode && (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100">
-                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                  <MdFlight className="h-5 w-5 text-gray-600" />
+            <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+              <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                  <div className="p-2 bg-gray-100/80 rounded-xl">
+                    <MdFlight className="h-5 w-5 text-gray-700" />
+                  </div>
                   Flight Information
                 </h3>
               </div>
-              <div className="p-5 space-y-4">
+              <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Flight Code</p>
@@ -355,11 +361,11 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
           )}
 
           {/* Assignment Details */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900">Assignment Details</h3>
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900">Assignment Details</h3>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-6 space-y-5">
               {/* Truck & Driver */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
@@ -437,8 +443,8 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
           </div>
 
           {/* Timestamps */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-xs text-gray-500">
+          <div className="glass-card rounded-2xl apple-shadow p-5">
+            <p className="text-xs font-medium text-gray-500">
               Created: {assignment.createdAt.toLocaleString('en-US', { 
                 month: 'short', 
                 day: 'numeric',

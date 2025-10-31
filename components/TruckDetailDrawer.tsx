@@ -160,16 +160,18 @@ export default function TruckDetailDrawer({ isOpen, onClose, truck }: TruckDetai
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400"></div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Basic Info */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiTruck className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiTruck className="h-5 w-5 text-gray-700" />
+                </div>
                 Basic Information
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Plate Number</p>
@@ -208,14 +210,16 @@ export default function TruckDetailDrawer({ isOpen, onClose, truck }: TruckDetai
           </div>
 
           {/* Current Assignment */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <MdAirplanemodeActive className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <MdAirplanemodeActive className="h-5 w-5 text-gray-700" />
+                </div>
                 Current Assignment
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               {currentAssignment ? (
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
@@ -259,14 +263,16 @@ export default function TruckDetailDrawer({ isOpen, onClose, truck }: TruckDetai
           </div>
 
           {/* Live Location */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiMapPin className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiMapPin className="h-5 w-5 text-gray-700" />
+                </div>
                 Live GPS Location
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               {trackingData ? (
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
@@ -299,7 +305,7 @@ export default function TruckDetailDrawer({ isOpen, onClose, truck }: TruckDetai
                     href={`https://www.google.com/maps?q=${trackingData.latitude},${trackingData.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm hover:shadow"
+                    className="inline-flex items-center gap-2.5 px-5 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 active:scale-[0.98] apple-transition text-sm font-semibold shadow-lg hover:shadow-xl"
                   >
                     <MdLocationOn className="h-4 w-4" />
                     View on Google Maps
@@ -316,14 +322,16 @@ export default function TruckDetailDrawer({ isOpen, onClose, truck }: TruckDetai
           </div>
 
           {/* Maintenance Info */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiTool className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiTool className="h-5 w-5 text-gray-700" />
+                </div>
                 Maintenance Information
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Last Maintenance</p>
@@ -351,18 +359,20 @@ export default function TruckDetailDrawer({ isOpen, onClose, truck }: TruckDetai
           </div>
 
           {/* Assignment History */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiList className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiList className="h-5 w-5 text-gray-700" />
+                </div>
                 Recent Assignment History
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               {assignmentHistory.length > 0 ? (
                 <div className="space-y-3">
                   {assignmentHistory.map((assignment) => (
-                    <div key={assignment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div key={assignment.id} className="p-4 bg-gradient-to-br from-gray-50/80 to-white rounded-2xl border border-gray-200/50 shadow-sm apple-hover">
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <h4 className="text-sm font-medium text-gray-900">{assignment.title}</h4>

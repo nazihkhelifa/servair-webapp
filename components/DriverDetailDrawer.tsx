@@ -136,27 +136,27 @@ export default function DriverDetailDrawer({ isOpen, onClose, driver }: DriverDe
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+        className="fixed inset-0 bg-black/20 backdrop-blur-md z-40 transition-all duration-300 ease-out"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-full md:w-[600px] bg-[#F5F5F5] shadow-xl z-50 overflow-y-auto">
+      <div className="fixed top-0 right-0 h-full w-full md:w-[600px] bg-gradient-to-b from-white via-white to-[#F9FAFB] apple-shadow-lg z-50 overflow-y-auto transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 backdrop-blur-sm">
-          <div className="flex items-start justify-between mb-4">
+        <div className="sticky top-0 z-10 glass-effect border-b border-gray-200/50 px-8 py-6">
+          <div className="flex items-start justify-between mb-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                <FiUser className="h-6 w-6 text-gray-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200/50 rounded-2xl flex items-center justify-center shadow-sm">
+                <FiUser className="h-7 w-7 text-gray-700" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{driver.fullName}</h2>
-                <p className="text-gray-500 text-sm">Driver ID: {driver.driverId}</p>
+                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">{driver.fullName}</h2>
+                <p className="text-gray-500 text-sm mt-0.5">Driver ID: {driver.driverId}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
+              className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-gray-900 active:scale-95"
               aria-label="Close drawer"
             >
               <FiX className="h-5 w-5" />
@@ -164,31 +164,33 @@ export default function DriverDetailDrawer({ isOpen, onClose, driver }: DriverDe
           </div>
 
           {/* Status Badge */}
-          <div className="flex items-center gap-2">
-            <div className={`px-3 py-1.5 rounded-lg ${statusColors[driver.currentStatus]} flex items-center gap-2`}>
+          <div className="flex items-center gap-2.5">
+            <div className={`px-4 py-2 rounded-2xl ${statusColors[driver.currentStatus]} flex items-center gap-2 shadow-sm`}>
               {getStatusIcon(driver.currentStatus)}
-              <span className="font-medium text-sm">{driver.currentStatus}</span>
+              <span className="font-semibold text-sm">{driver.currentStatus}</span>
             </div>
             {driver.assignedTruckId && (
-              <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 flex items-center gap-2">
+              <div className="px-4 py-2 rounded-2xl bg-gray-100 text-gray-700 flex items-center gap-2 shadow-sm">
                 <FiTruck className="h-4 w-4" />
-                <span className="text-sm font-medium">{driver.assignedTruckId}</span>
+                <span className="text-sm font-semibold">{driver.assignedTruckId}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-8 space-y-5">
           {/* Contact Information */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiUser className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiUser className="h-5 w-5 text-gray-700" />
+                </div>
                 Contact Information
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-gray-700">
                   <FiPhone className="h-5 w-5 text-gray-400 flex-shrink-0" />
@@ -216,14 +218,16 @@ export default function DriverDetailDrawer({ isOpen, onClose, driver }: DriverDe
           </div>
 
           {/* Live GPS Location */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiMapPin className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiMapPin className="h-5 w-5 text-gray-700" />
+                </div>
                 Live GPS Location
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               {driver.currentLatitude && driver.currentLongitude ? (
                 <div className="space-y-3">
                   <div className="bg-gray-50 rounded-lg p-4">
@@ -282,40 +286,44 @@ export default function DriverDetailDrawer({ isOpen, onClose, driver }: DriverDe
           </div>
 
           {/* Performance Summary */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiAward className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiAward className="h-5 w-5 text-gray-700" />
+                </div>
                 Performance Summary
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-semibold text-gray-900">{todayAssignments.length}</p>
-                  <p className="text-xs text-gray-600 mt-1">Today's Tasks</p>
+                <div className="text-center p-5 bg-gradient-to-br from-gray-50/80 to-gray-100/50 rounded-2xl shadow-sm">
+                  <p className="text-3xl font-bold text-gray-900 tracking-tight">{todayAssignments.length}</p>
+                  <p className="text-xs font-medium text-gray-600 mt-2 uppercase tracking-wide">Today's Tasks</p>
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-semibold text-gray-900">{completedAssignments.length}</p>
-                  <p className="text-xs text-gray-600 mt-1">Completed</p>
+                <div className="text-center p-5 bg-gradient-to-br from-gray-50/80 to-gray-100/50 rounded-2xl shadow-sm">
+                  <p className="text-3xl font-bold text-gray-900 tracking-tight">{completedAssignments.length}</p>
+                  <p className="text-xs font-medium text-gray-600 mt-2 uppercase tracking-wide">Completed</p>
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-semibold text-gray-900">{completionRate}%</p>
-                  <p className="text-xs text-gray-600 mt-1">Success Rate</p>
+                <div className="text-center p-5 bg-gradient-to-br from-gray-50/80 to-gray-100/50 rounded-2xl shadow-sm">
+                  <p className="text-3xl font-bold text-gray-900 tracking-tight">{completionRate}%</p>
+                  <p className="text-xs font-medium text-gray-600 mt-2 uppercase tracking-wide">Success Rate</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Assignment History */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiCalendar className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiCalendar className="h-5 w-5 text-gray-700" />
+                </div>
                 Recent Assignments
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               {isLoadingAssignments ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto" />
@@ -323,11 +331,11 @@ export default function DriverDetailDrawer({ isOpen, onClose, driver }: DriverDe
                 </div>
               ) : assignments.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {assignments.slice(0, 10).map((assignment) => (
-                    <div
-                      key={assignment.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                    >
+                {assignments.slice(0, 10).map((assignment) => (
+                  <div
+                    key={assignment.id}
+                    className="border border-gray-200/50 rounded-2xl p-4 hover:bg-gray-50/80 apple-transition apple-hover bg-white/50"
+                  >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <h4 className="font-medium text-sm text-gray-900">{assignment.title}</h4>
@@ -381,15 +389,17 @@ export default function DriverDetailDrawer({ isOpen, onClose, driver }: DriverDe
 
           {/* Notes */}
           {driver.notes && (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100">
-                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                  <FiFileText className="h-5 w-5 text-gray-600" />
+            <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+              <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                  <div className="p-2 bg-gray-100/80 rounded-xl">
+                    <FiFileText className="h-5 w-5 text-gray-700" />
+                  </div>
                   Notes
                 </h3>
               </div>
-              <div className="p-5">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{driver.notes}</p>
+              <div className="p-6">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{driver.notes}</p>
               </div>
             </div>
           )}

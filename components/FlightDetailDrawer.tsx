@@ -134,21 +134,21 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+        className="fixed inset-0 bg-black/20 backdrop-blur-md z-40 transition-all duration-300 ease-out"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-full md:w-[700px] bg-[#F5F5F5] shadow-xl z-50 overflow-y-auto">
+      <div className="fixed top-0 right-0 h-full w-full md:w-[700px] bg-gradient-to-b from-white via-white to-[#F9FAFB] apple-shadow-lg z-50 overflow-y-auto transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 backdrop-blur-sm">
-          <div className="flex items-start justify-between mb-4">
+        <div className="sticky top-0 z-10 glass-effect border-b border-gray-200/50 px-8 py-6">
+          <div className="flex items-start justify-between mb-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                <MdFlight className="h-6 w-6 text-gray-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200/50 rounded-2xl flex items-center justify-center shadow-sm">
+                <MdFlight className="h-7 w-7 text-gray-700" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">{flight.flightCode}</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">{flight.flightCode}</h2>
                 <p className="text-gray-500 text-sm flex items-center gap-2 mt-1">
                   <MdFlightTakeoff className="h-4 w-4" />
                   {flight.flightOrigin || 'Unknown'} 
@@ -160,7 +160,7 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
+              className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-gray-900 active:scale-95"
               aria-label="Close drawer"
             >
               <FiX className="h-5 w-5" />
@@ -168,37 +168,39 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
           </div>
 
           {/* Status Badge */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className={`px-3 py-1.5 rounded-lg ${statusColors[flight.status.toLowerCase()] || 'bg-gray-100 text-gray-700'} flex items-center gap-2`}>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className={`px-4 py-2 rounded-2xl ${statusColors[flight.status.toLowerCase()] || 'bg-gray-100 text-gray-700'} flex items-center gap-2 shadow-sm`}>
               {getStatusIcon(flight.status)}
-              <span className="font-medium text-sm capitalize">{flight.status}</span>
+              <span className="font-semibold text-sm capitalize">{flight.status}</span>
             </div>
             {flight.gate && (
-              <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 flex items-center gap-2">
+              <div className="px-4 py-2 rounded-2xl bg-gray-100 text-gray-700 flex items-center gap-2 shadow-sm">
                 <FiMapPin className="h-4 w-4" />
-                <span className="text-sm font-medium">Gate {flight.gate}</span>
+                <span className="text-sm font-semibold">Gate {flight.gate}</span>
               </div>
             )}
             {flight.airline && (
-              <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 flex items-center gap-2">
+              <div className="px-4 py-2 rounded-2xl bg-gray-100 text-gray-700 flex items-center gap-2 shadow-sm">
                 <MdFlight className="h-4 w-4" />
-                <span className="text-sm font-medium">{flight.airline}</span>
+                <span className="text-sm font-semibold">{flight.airline}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-8 space-y-5">
           {/* Flight Information */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <MdFlight className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <MdFlight className="h-5 w-5 text-gray-700" />
+                </div>
                 Flight Information
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Flight Type</p>
@@ -237,26 +239,28 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
           </div>
 
           {/* Service Timeline Progress */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiActivity className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiActivity className="h-5 w-5 text-gray-700" />
+                </div>
                 Service Progress
               </h3>
             </div>
-            <div className="p-5">
-              <div className="space-y-3">
+            <div className="p-6">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Services Completed</span>
-                  <span className="font-semibold text-gray-900">{completedServices} / {totalServices}</span>
+                  <span className="font-medium text-gray-600">Services Completed</span>
+                  <span className="font-bold text-gray-900 text-base">{completedServices} / {totalServices}</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-gray-200/80 rounded-full h-3 overflow-hidden shadow-inner">
                   <div 
-                    className="bg-gray-700 h-full transition-all duration-500 rounded-full"
+                    className="bg-gradient-to-r from-gray-700 to-gray-800 h-full transition-all duration-700 ease-out rounded-full shadow-sm"
                     style={{ width: `${progressPercentage}%` }}
                   />
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs font-medium text-gray-500">
                   {progressPercentage === 100 ? '✓ All services completed' : `${Math.round(progressPercentage)}% complete`}
                 </p>
               </div>
@@ -264,16 +268,18 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
           </div>
 
           {/* Assigned Trucks & Drivers */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiTruck className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiTruck className="h-5 w-5 text-gray-700" />
+                </div>
                 Assigned Resources
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gradient-to-br from-gray-50/80 to-gray-100/50 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <FiTruck className="h-5 w-5 text-gray-600" />
                     <p className="font-medium text-sm text-gray-900">Trucks</p>
@@ -288,10 +294,10 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
                     <p className="text-sm text-gray-500">No trucks assigned</p>
                   )}
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-gradient-to-br from-gray-50/80 to-gray-100/50 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
                     <FiUser className="h-5 w-5 text-gray-600" />
-                    <p className="font-medium text-sm text-gray-900">Drivers</p>
+                    <p className="font-semibold text-sm text-gray-900">Drivers</p>
                   </div>
                   {uniqueDrivers.length > 0 ? (
                     <div className="space-y-1">
@@ -308,14 +314,16 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
           </div>
 
           {/* Service Timeline */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <FiCalendar className="h-5 w-5 text-gray-600" />
+          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-gray-100/80 rounded-xl">
+                  <FiCalendar className="h-5 w-5 text-gray-700" />
+                </div>
                 Service Timeline
               </h3>
             </div>
-            <div className="p-5">
+            <div className="p-6">
               {isLoadingAssignments ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto" />
@@ -339,7 +347,7 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
                         : 'bg-gray-300'
                     }`} />
                     
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-gradient-to-br from-gray-50/80 to-white rounded-2xl p-5 shadow-sm apple-hover border border-gray-100/50">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <h4 className="font-semibold text-gray-900">{assignment.title}</h4>
@@ -393,15 +401,17 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
 
           {/* Notes */}
           {flight.notes && (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100">
-                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                  <FiCalendar className="h-5 w-5 text-gray-600" />
+            <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
+              <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                  <div className="p-2 bg-gray-100/80 rounded-xl">
+                    <FiCalendar className="h-5 w-5 text-gray-700" />
+                  </div>
                   Notes
                 </h3>
               </div>
-              <div className="p-5">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{flight.notes}</p>
+              <div className="p-6">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{flight.notes}</p>
               </div>
             </div>
           )}

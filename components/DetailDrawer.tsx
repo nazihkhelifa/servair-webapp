@@ -55,22 +55,22 @@ export default function DetailDrawer({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
+        className="fixed inset-0 bg-black/20 backdrop-blur-md z-40 transition-all duration-300 ease-out"
         onClick={onClose}
       />
 
       {/* Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full bg-[#F5F5F5] shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed top-0 right-0 h-full bg-gradient-to-b from-white via-white to-[#F9FAFB] apple-shadow-lg z-50 transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+          isOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
         } w-full ${widthClasses[width]}`}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
-          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-6 glass-effect border-b border-gray-200/50">
+          <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
+            className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-gray-900 active:scale-95"
             aria-label="Close drawer"
           >
             <FiX className="h-5 w-5" />
@@ -78,7 +78,7 @@ export default function DetailDrawer({
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto h-[calc(100vh-81px)] p-6">
+        <div className="overflow-y-auto h-[calc(100vh-89px)] p-8">
           {children}
         </div>
       </div>
