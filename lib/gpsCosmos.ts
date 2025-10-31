@@ -27,10 +27,12 @@ export const addGPSData = async (gpsData: GPSData) => {
     const historyContainer = await getTrackingHistoryContainer()
 
     // Upsert latest location (using userId as partition key)
+    // Destructure to exclude id from gpsData to avoid duplicate property
+    const { id: _, ...gpsDataWithoutId } = gpsData
     const latestDoc = {
       id: `tracking-${gpsData.userId}`,
       driverId: gpsData.userId,
-      ...gpsData,
+      ...gpsDataWithoutId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -41,7 +43,7 @@ export const addGPSData = async (gpsData: GPSData) => {
     const historyDoc = {
       id: `history-${gpsData.userId}-${gpsData.timestamp}`,
       driverId: gpsData.userId,
-      ...gpsData,
+      ...gpsDataWithoutId,
       createdAt: new Date().toISOString(),
     }
 
