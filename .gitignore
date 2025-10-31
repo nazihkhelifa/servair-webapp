@@ -107,3 +107,7 @@ __pycache__/
 
 # CSV data files (optional - uncomment if you don't want to track them)
 # *.csv
+
+# Documentation files (markdown) - exclude from deployment to save space
+*.md
+!README.md
