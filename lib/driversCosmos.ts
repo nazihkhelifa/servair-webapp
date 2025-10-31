@@ -186,7 +186,15 @@ export const updateDriver = async (driverId: string, payload: Partial<DriverPayl
     if (typeof value === 'undefined') return
     
     if (key === 'lastGpsUpdate' && value) {
-      updates.lastGpsUpdate = typeof value === 'string' ? value : value.toISOString()
+      if (typeof value === 'string') {
+        updates.lastGpsUpdate = value
+      } else if (value instanceof Date) {
+        updates.lastGpsUpdate = value.toISOString()
+      } else if (typeof value === 'number') {
+        updates.lastGpsUpdate = new Date(value).toISOString()
+      } else {
+        updates.lastGpsUpdate = value.toString()
+      }
     } else {
       updates[key] = value ?? null
     }
