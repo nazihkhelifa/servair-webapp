@@ -94,17 +94,29 @@ const normalizePayload = (payload: TruckPayload) => {
   }
 
   if (payload.lastMaintenanceDate) {
-    normalized.lastMaintenanceDate = typeof payload.lastMaintenanceDate === 'string'
-      ? payload.lastMaintenanceDate
-      : payload.lastMaintenanceDate.toISOString()
+    if (typeof payload.lastMaintenanceDate === 'string') {
+      normalized.lastMaintenanceDate = payload.lastMaintenanceDate
+    } else if (payload.lastMaintenanceDate instanceof Date) {
+      normalized.lastMaintenanceDate = payload.lastMaintenanceDate.toISOString()
+    } else if (typeof payload.lastMaintenanceDate === 'number') {
+      normalized.lastMaintenanceDate = new Date(payload.lastMaintenanceDate).toISOString()
+    } else {
+      normalized.lastMaintenanceDate = String(payload.lastMaintenanceDate)
+    }
   } else {
     normalized.lastMaintenanceDate = null
   }
 
   if (payload.nextMaintenanceDate) {
-    normalized.nextMaintenanceDate = typeof payload.nextMaintenanceDate === 'string'
-      ? payload.nextMaintenanceDate
-      : payload.nextMaintenanceDate.toISOString()
+    if (typeof payload.nextMaintenanceDate === 'string') {
+      normalized.nextMaintenanceDate = payload.nextMaintenanceDate
+    } else if (payload.nextMaintenanceDate instanceof Date) {
+      normalized.nextMaintenanceDate = payload.nextMaintenanceDate.toISOString()
+    } else if (typeof payload.nextMaintenanceDate === 'number') {
+      normalized.nextMaintenanceDate = new Date(payload.nextMaintenanceDate).toISOString()
+    } else {
+      normalized.nextMaintenanceDate = String(payload.nextMaintenanceDate)
+    }
   } else {
     normalized.nextMaintenanceDate = null
   }
@@ -174,7 +186,15 @@ export const updateTruck = async (truckId: string, payload: Partial<TruckPayload
     if (typeof value === 'undefined') return
     
     if ((key === 'lastMaintenanceDate' || key === 'nextMaintenanceDate') && value) {
-      updates[key] = typeof value === 'string' ? value : value.toISOString()
+      if (typeof value === 'string') {
+        updates[key] = value
+      } else if (value instanceof Date) {
+        updates[key] = value.toISOString()
+      } else if (typeof value === 'number') {
+        updates[key] = new Date(value).toISOString()
+      } else {
+        updates[key] = String(value)
+      }
     } else {
       updates[key] = value ?? null
     }
