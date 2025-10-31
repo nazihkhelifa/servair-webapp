@@ -93,9 +93,15 @@ const normalizePayload = (payload: DriverPayload) => {
   }
 
   if (payload.lastGpsUpdate) {
-    normalized.lastGpsUpdate = typeof payload.lastGpsUpdate === 'string' 
-      ? payload.lastGpsUpdate 
-      : payload.lastGpsUpdate.toISOString()
+    if (typeof payload.lastGpsUpdate === 'string') {
+      normalized.lastGpsUpdate = payload.lastGpsUpdate
+    } else if (payload.lastGpsUpdate instanceof Date) {
+      normalized.lastGpsUpdate = payload.lastGpsUpdate.toISOString()
+    } else if (typeof payload.lastGpsUpdate === 'number') {
+      normalized.lastGpsUpdate = new Date(payload.lastGpsUpdate).toISOString()
+    } else {
+      normalized.lastGpsUpdate = String(payload.lastGpsUpdate)
+    }
   } else {
     normalized.lastGpsUpdate = null
   }
