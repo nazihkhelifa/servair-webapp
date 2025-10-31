@@ -17,6 +17,9 @@ dist/
 .env.test.local
 .env.production.local
 
+# Git credentials (sensitive)
+.git-credentials
+
 # Vercel
 .vercel
 
