@@ -97,11 +97,11 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
   if (!isOpen || !flight) return null
 
   const statusColors: Record<string, string> = {
-    scheduled: 'bg-blue-100 text-blue-700 border-blue-300',
-    active: 'bg-green-100 text-green-700 border-green-300',
-    landed: 'bg-gray-100 text-gray-700 border-gray-300',
-    cancelled: 'bg-red-100 text-red-700 border-red-300',
-    delayed: 'bg-yellow-100 text-yellow-700 border-yellow-300'
+    scheduled: 'bg-blue-100 text-blue-700',
+    active: 'bg-green-100 text-green-700',
+    landed: 'bg-gray-100 text-gray-700',
+    cancelled: 'bg-red-100 text-red-700',
+    delayed: 'bg-yellow-100 text-yellow-700'
   }
 
   const getStatusIcon = (status: string) => {
@@ -134,22 +134,22 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 z-40 transition-opacity"
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-full md:w-[700px] bg-white shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed top-0 right-0 h-full w-full md:w-[700px] bg-[#F5F5F5] shadow-xl z-50 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-700 text-white p-6 shadow-lg">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 backdrop-blur-sm">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur">
-                <MdFlight className="h-8 w-8" />
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                <MdFlight className="h-6 w-6 text-gray-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">{flight.flightCode}</h2>
-                <p className="text-indigo-100 text-sm flex items-center gap-2 mt-1">
+                <h2 className="text-xl font-semibold text-gray-900">{flight.flightCode}</h2>
+                <p className="text-gray-500 text-sm flex items-center gap-2 mt-1">
                   <MdFlightTakeoff className="h-4 w-4" />
                   {flight.flightOrigin || 'Unknown'} 
                   <span className="mx-1">→</span> 
@@ -160,27 +160,27 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
               aria-label="Close drawer"
             >
-              <FiX className="h-6 w-6" />
+              <FiX className="h-5 w-5" />
             </button>
           </div>
 
           {/* Status Badge */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className={`px-4 py-2 rounded-full ${statusColors[flight.status.toLowerCase()] || 'bg-gray-100 text-gray-700'} border-2 flex items-center gap-2 bg-white`}>
+            <div className={`px-3 py-1.5 rounded-lg ${statusColors[flight.status.toLowerCase()] || 'bg-gray-100 text-gray-700'} flex items-center gap-2`}>
               {getStatusIcon(flight.status)}
-              <span className="font-semibold capitalize">{flight.status}</span>
+              <span className="font-medium text-sm capitalize">{flight.status}</span>
             </div>
             {flight.gate && (
-              <div className="px-4 py-2 rounded-full bg-white/20 backdrop-blur flex items-center gap-2">
+              <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 flex items-center gap-2">
                 <FiMapPin className="h-4 w-4" />
                 <span className="text-sm font-medium">Gate {flight.gate}</span>
               </div>
             )}
             {flight.airline && (
-              <div className="px-4 py-2 rounded-full bg-white/20 backdrop-blur flex items-center gap-2">
+              <div className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 flex items-center gap-2">
                 <MdFlight className="h-4 w-4" />
                 <span className="text-sm font-medium">{flight.airline}</span>
               </div>
@@ -189,124 +189,139 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-4">
           {/* Flight Information */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <MdFlight className="h-5 w-5 text-indigo-600" />
-              Flight Information
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Flight Type</p>
-                <p className="font-medium text-gray-900 capitalize">{flight.flightType}</p>
-              </div>
-              {flight.planeType && (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <MdFlight className="h-5 w-5 text-gray-600" />
+                Flight Information
+              </h3>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Aircraft Type</p>
-                  <p className="font-medium text-gray-900">{flight.planeType}</p>
+                  <p className="text-xs text-gray-500 mb-1">Flight Type</p>
+                  <p className="font-medium text-sm text-gray-900 capitalize">{flight.flightType}</p>
                 </div>
-              )}
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Scheduled Time</p>
-                <p className="font-medium text-gray-900">{flight.theoreticalHour}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Date</p>
-                <p className="font-medium text-gray-900">
-                  {new Date(flight.theoreticalDateTime).toLocaleDateString()}
-                </p>
-              </div>
-              {flight.terminal && (
+                {flight.planeType && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Aircraft Type</p>
+                    <p className="font-medium text-sm text-gray-900">{flight.planeType}</p>
+                  </div>
+                )}
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Terminal</p>
-                  <p className="font-medium text-gray-900">{flight.terminal}</p>
+                  <p className="text-xs text-gray-500 mb-1">Scheduled Time</p>
+                  <p className="font-medium text-sm text-gray-900">{flight.theoreticalHour}</p>
                 </div>
-              )}
-              {flight.passengerCount && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Passengers</p>
-                  <p className="font-medium text-gray-900">{flight.passengerCount}</p>
+                  <p className="text-xs text-gray-500 mb-1">Date</p>
+                  <p className="font-medium text-sm text-gray-900">
+                    {new Date(flight.theoreticalDateTime).toLocaleDateString()}
+                  </p>
                 </div>
-              )}
+                {flight.terminal && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Terminal</p>
+                    <p className="font-medium text-sm text-gray-900">{flight.terminal}</p>
+                  </div>
+                )}
+                {flight.passengerCount && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Passengers</p>
+                    <p className="font-medium text-sm text-gray-900">{flight.passengerCount}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Service Timeline Progress */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FiActivity className="h-5 w-5 text-indigo-600" />
-              Service Progress
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Services Completed</span>
-                <span className="font-semibold text-gray-900">{completedServices} / {totalServices}</span>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <FiActivity className="h-5 w-5 text-gray-600" />
+                Service Progress
+              </h3>
+            </div>
+            <div className="p-5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Services Completed</span>
+                  <span className="font-semibold text-gray-900">{completedServices} / {totalServices}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gray-700 h-full transition-all duration-500 rounded-full"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500">
+                  {progressPercentage === 100 ? '✓ All services completed' : `${Math.round(progressPercentage)}% complete`}
+                </p>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 h-full transition-all duration-500 rounded-full"
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                {progressPercentage === 100 ? '✓ All services completed' : `${Math.round(progressPercentage)}% complete`}
-              </p>
             </div>
           </div>
 
           {/* Assigned Trucks & Drivers */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FiTruck className="h-5 w-5 text-indigo-600" />
-              Assigned Resources
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <FiTruck className="h-5 w-5 text-blue-600" />
-                  <p className="font-semibold text-gray-900">Trucks</p>
-                </div>
-                {uniqueTrucks.length > 0 ? (
-                  <div className="space-y-1">
-                    {uniqueTrucks.map((truck, index) => (
-                      <p key={index} className="text-sm text-gray-700 font-medium">{truck}</p>
-                    ))}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <FiTruck className="h-5 w-5 text-gray-600" />
+                Assigned Resources
+              </h3>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FiTruck className="h-5 w-5 text-gray-600" />
+                    <p className="font-medium text-sm text-gray-900">Trucks</p>
                   </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No trucks assigned</p>
-                )}
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <FiUser className="h-5 w-5 text-purple-600" />
-                  <p className="font-semibold text-gray-900">Drivers</p>
+                  {uniqueTrucks.length > 0 ? (
+                    <div className="space-y-1">
+                      {uniqueTrucks.map((truck, index) => (
+                        <p key={index} className="text-sm text-gray-700 font-medium">{truck}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No trucks assigned</p>
+                  )}
                 </div>
-                {uniqueDrivers.length > 0 ? (
-                  <div className="space-y-1">
-                    {uniqueDrivers.map((driver, index) => (
-                      <p key={index} className="text-sm text-gray-700 font-medium">{driver}</p>
-                    ))}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FiUser className="h-5 w-5 text-gray-600" />
+                    <p className="font-medium text-sm text-gray-900">Drivers</p>
                   </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No drivers assigned</p>
-                )}
+                  {uniqueDrivers.length > 0 ? (
+                    <div className="space-y-1">
+                      {uniqueDrivers.map((driver, index) => (
+                        <p key={index} className="text-sm text-gray-700 font-medium">{driver}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No drivers assigned</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Service Timeline */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <FiCalendar className="h-5 w-5 text-indigo-600" />
-              Service Timeline
-            </h3>
-            {isLoadingAssignments ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto" />
-                <p className="text-gray-500 mt-2 text-sm">Loading services...</p>
-              </div>
-            ) : assignments.length > 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <FiCalendar className="h-5 w-5 text-gray-600" />
+                Service Timeline
+              </h3>
+            </div>
+            <div className="p-5">
+              {isLoadingAssignments ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto" />
+                  <p className="text-gray-500 mt-2 text-sm">Loading services...</p>
+                </div>
+              ) : assignments.length > 0 ? (
               <div className="space-y-4">
                 {assignments.map((assignment, index) => (
                   <div
@@ -366,23 +381,28 @@ export default function FlightDetailDrawer({ isOpen, onClose, flight }: FlightDe
                     </div>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <FiCalendar className="mx-auto h-12 w-12 text-gray-300 mb-2" />
-                <p>No services scheduled for this flight</p>
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FiCalendar className="mx-auto h-12 w-12 text-gray-300 mb-2" />
+                  <p>No services scheduled for this flight</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Notes */}
           {flight.notes && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <FiCalendar className="h-5 w-5 text-indigo-600" />
-                Notes
-              </h3>
-              <p className="text-gray-700 whitespace-pre-wrap">{flight.notes}</p>
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                  <FiCalendar className="h-5 w-5 text-gray-600" />
+                  Notes
+                </h3>
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{flight.notes}</p>
+              </div>
             </div>
           )}
         </div>

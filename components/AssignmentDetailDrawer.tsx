@@ -147,24 +147,24 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-700 border-green-300'
+        return 'bg-green-100 text-green-700'
       case 'in-progress':
-        return 'bg-blue-100 text-blue-700 border-blue-300'
+        return 'bg-blue-100 text-blue-700'
       case 'cancelled':
-        return 'bg-red-100 text-red-700 border-red-300'
+        return 'bg-red-100 text-red-700'
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300'
+        return 'bg-gray-100 text-gray-700'
     }
   }
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'bg-red-100 text-red-700 border-red-300'
+        return 'bg-red-100 text-red-700'
       case 'medium':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-300'
+        return 'bg-yellow-100 text-yellow-700'
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-300'
+        return 'bg-gray-100 text-gray-700'
     }
   }
 
@@ -187,48 +187,48 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-opacity"
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-[#F5F5F5] shadow-xl z-50 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shadow-md z-10">
-          <div className="flex items-start justify-between">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5 backdrop-blur-sm">
+          <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 {getStatusIcon(assignment.status)}
-                <h2 className="text-2xl font-bold">{assignment.title}</h2>
+                <h2 className="text-xl font-semibold text-gray-900">{assignment.title}</h2>
               </div>
-              <p className="text-blue-100 text-sm">Assignment #{assignment.id.slice(0, 8)}</p>
+              <p className="text-gray-500 text-sm">Assignment #{assignment.id.slice(0, 8)}</p>
             </div>
             <button
               onClick={onClose}
-              className="ml-4 p-2 hover:bg-blue-700 rounded-lg transition-colors"
+              className="ml-4 p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-gray-900"
             >
-              <FiX className="h-6 w-6" />
+              <FiX className="h-5 w-5" />
             </button>
           </div>
 
           {/* Status and Priority Badges */}
-          <div className="flex gap-2 mt-4">
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(assignment.status)} bg-white`}>
+          <div className="flex gap-2">
+            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getStatusBadge(assignment.status)}`}>
               {assignment.status.toUpperCase()}
             </span>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityBadge(assignment.priority)} bg-white`}>
+            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getPriorityBadge(assignment.priority)}`}>
               {assignment.priority.toUpperCase()} PRIORITY
             </span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-4">
           {/* Quick Actions */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
             <button
               onClick={handleViewOnMap}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-colors bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow"
             >
               <FiMap className="h-5 w-5" />
               View Route on Map
@@ -236,28 +236,28 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
           </div>
 
           {/* Route Information */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <FiNavigation className="h-5 w-5 text-blue-600" />
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <FiNavigation className="h-5 w-5 text-gray-600" />
                 Route Details
               </h3>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-5 space-y-4">
               {/* Start Location */}
               <div className="flex items-start gap-3 pb-4 border-b border-gray-100">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FiFlag className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <FiFlag className="h-5 w-5 text-gray-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 mb-1">Start Location</p>
-                  <p className="text-base font-semibold text-gray-900">{assignment.startLocation}</p>
+                  <p className="text-base font-medium text-gray-900">{assignment.startLocation}</p>
                   {startLocationData?.description && (
                     <p className="text-xs text-gray-500 mt-1">{startLocationData.description}</p>
                   )}
                   {startLocationData?.latitude && startLocationData?.longitude && (
                     <p className="text-xs text-gray-400 mt-1 font-mono">
-                      📍 {startLocationData.latitude.toFixed(4)}, {startLocationData.longitude.toFixed(4)}
+                      {startLocationData.latitude.toFixed(4)}, {startLocationData.longitude.toFixed(4)}
                     </p>
                   )}
                 </div>
@@ -265,17 +265,17 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
 
               {/* Distance & ETA */}
               {distance && (
-                <div className="flex items-center justify-center gap-6 py-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-center gap-6 py-4 bg-gray-50 rounded-lg">
                   <div className="text-center">
                     <p className="text-xs text-gray-500 mb-1">Distance</p>
-                    <p className="text-lg font-bold text-blue-600">
+                    <p className="text-lg font-semibold text-gray-900">
                       {distance < 1000 ? `${Math.round(distance)} m` : `${(distance / 1000).toFixed(2)} km`}
                     </p>
                   </div>
                   {eta && (
                     <div className="text-center">
                       <p className="text-xs text-gray-500 mb-1">Est. Arrival</p>
-                      <p className="text-lg font-bold text-blue-600">{eta}</p>
+                      <p className="text-lg font-semibold text-gray-900">{eta}</p>
                     </div>
                   )}
                 </div>
@@ -283,18 +283,18 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
 
               {/* Destination */}
               <div className="flex items-start gap-3 pt-2">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <MdLocationOn className="h-5 w-5 text-red-600" />
+                <div className="p-2 bg-gray-50 rounded-lg">
+                  <MdLocationOn className="h-5 w-5 text-gray-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 mb-1">Destination</p>
-                  <p className="text-base font-semibold text-gray-900">{assignment.destination}</p>
+                  <p className="text-base font-medium text-gray-900">{assignment.destination}</p>
                   {destinationData?.description && (
                     <p className="text-xs text-gray-500 mt-1">{destinationData.description}</p>
                   )}
                   {destinationData?.latitude && destinationData?.longitude && (
                     <p className="text-xs text-gray-400 mt-1 font-mono">
-                      📍 {destinationData.latitude.toFixed(4)}, {destinationData.longitude.toFixed(4)}
+                      {destinationData.latitude.toFixed(4)}, {destinationData.longitude.toFixed(4)}
                     </p>
                   )}
                 </div>
@@ -304,23 +304,23 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
 
           {/* Flight Information */}
           {assignment.flightCode && (
-            <div className="bg-white rounded-xl border-2 border-indigo-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-4 py-3 border-b border-indigo-200">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <MdFlight className="h-5 w-5 text-indigo-600" />
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                  <MdFlight className="h-5 w-5 text-gray-600" />
                   Flight Information
                 </h3>
               </div>
-              <div className="p-4 space-y-3">
+              <div className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Flight Code</p>
-                    <p className="text-base font-semibold text-gray-900">{assignment.flightCode}</p>
+                    <p className="text-base font-medium text-gray-900">{assignment.flightCode}</p>
                   </div>
                   {assignment.gate && (
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Gate</p>
-                      <p className="text-base font-semibold text-gray-900">{assignment.gate}</p>
+                      <p className="text-base font-medium text-gray-900">{assignment.gate}</p>
                     </div>
                   )}
                 </div>
@@ -355,25 +355,25 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
           )}
 
           {/* Assignment Details */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Assignment Details</h3>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900">Assignment Details</h3>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="p-5 space-y-4">
               {/* Truck & Driver */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
-                  <FiTruck className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <FiTruck className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Truck</p>
-                    <p className="text-sm font-semibold text-gray-900">{assignment.truck}</p>
+                    <p className="text-sm font-medium text-gray-900">{assignment.truck}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <FiUser className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <FiUser className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Driver</p>
-                    <p className="text-sm font-semibold text-gray-900">{assignment.driver}</p>
+                    <p className="text-sm font-medium text-gray-900">{assignment.driver}</p>
                   </div>
                 </div>
               </div>
@@ -385,9 +385,9 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
               </div>
 
               {/* Times */}
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
                 <div className="flex items-start gap-3">
-                  <FiCalendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <FiCalendar className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Start Time</p>
                     <p className="text-sm font-medium text-gray-900">
@@ -397,7 +397,7 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
                         year: 'numeric'
                       })}
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-gray-500">
                       {assignment.createdAt.toLocaleTimeString('en-US', { 
                         hour: '2-digit', 
                         minute: '2-digit' 
@@ -406,7 +406,7 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <FiClock className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <FiClock className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Due Time</p>
                     <p className="text-sm font-medium text-gray-900">
@@ -416,7 +416,7 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
                         year: 'numeric'
                       })}
                     </p>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-gray-500">
                       {assignment.dueDate.toLocaleTimeString('en-US', { 
                         hour: '2-digit', 
                         minute: '2-digit' 
@@ -427,9 +427,9 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
               </div>
 
               {/* Airport */}
-              <div className="pt-2 border-t border-gray-100">
+              <div className="pt-4 border-t border-gray-100">
                 <p className="text-xs text-gray-500 mb-1">Airport</p>
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-medium text-gray-900">
                   {assignment.airport === 'CDG' ? 'Charles de Gaulle (CDG)' : 'Orly (ORY)'}
                 </p>
               </div>
@@ -437,7 +437,7 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
           </div>
 
           {/* Timestamps */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
             <p className="text-xs text-gray-500">
               Created: {assignment.createdAt.toLocaleString('en-US', { 
                 month: 'short', 
