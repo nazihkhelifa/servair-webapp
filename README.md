@@ -15,7 +15,6 @@ Fleet management web application built with Next.js 14, TypeScript, and Azure Co
 - **Framework**: Next.js 14
 - **Language**: TypeScript
 - **Database**: Azure Cosmos DB
-- **Authentication**: Firebase Admin
 - **Maps**: Leaflet with React-Leaflet
 - **Styling**: Tailwind CSS
 
@@ -26,7 +25,6 @@ Fleet management web application built with Next.js 14, TypeScript, and Azure Co
 - Node.js 20+ (LTS recommended)
 - npm or yarn
 - Azure Cosmos DB account
-- Firebase project (for authentication)
 
 ### Installation
 
@@ -48,15 +46,6 @@ Create a `.env.local` file with the following variables:
 # Azure Cosmos DB
 COSMOS_ENDPOINT=your-cosmos-endpoint
 COSMOS_KEY=your-cosmos-key
-
-# Firebase Admin (choose one method)
-# Option A: Inline credentials
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=your-service-account-email
-FIREBASE_PRIVATE_KEY=your-private-key
-
-# Option B: Application Default Credentials
-GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
 ```
 
 4. Run the development server:
@@ -90,7 +79,6 @@ servair-webapp/
 ├── components/            # React components
 ├── lib/                   # Utility libraries
 │   ├── cosmosDb.ts       # Cosmos DB client
-│   ├── firebaseAdmin.ts  # Firebase Admin SDK
 │   └── ...               # Other utilities
 ├── public/               # Static assets
 ├── scripts/              # Migration scripts

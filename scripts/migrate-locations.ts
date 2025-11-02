@@ -7,7 +7,8 @@
  * Make sure to set environment variables in .env.local:
  * - COSMOS_ENDPOINT
  * - COSMOS_KEY
- * - FIREBASE_PROJECT_ID (or use existing Firebase config)
+ * 
+ * Note: Firebase/Firestore support has been removed. This script is disabled.
  */
 
 // IMPORTANT: Load environment variables FIRST before any other imports
@@ -23,7 +24,10 @@ console.log(`✅ COSMOS_KEY: ${process.env.COSMOS_KEY ? 'Set' : 'Missing'}\n`)
 
 // Now import modules that need environment variables
 import { getLocationsContainer, getDatabase } from '../lib/cosmosDb'
-import { adminDb } from '../lib/firebaseAdmin'
+
+// Note: This migration script no longer supports Firestore source.
+// If you need to migrate from Firestore, use the Firebase console to export data
+// and then import it via the API or directly into Cosmos DB.
 
 interface FirestoreLocation {
   id: string
@@ -40,8 +44,20 @@ interface FirestoreLocation {
 
 async function migrateLocations() {
   try {
-    console.log('🚀 Starting locations migration from Firestore to Cosmos DB...\n')
+    console.log('🚀 Location migration script\n')
+    console.log('⚠️  Firebase/Firestore has been removed from this project.')
+    console.log('This script can no longer migrate from Firestore.')
+    console.log('To migrate locations:')
+    console.log('  1. Export data from Firestore manually')
+    console.log('  2. Use the /api/locations/seed endpoint to import data')
+    console.log('  3. Or import directly into Cosmos DB\n')
+    
+    // Exit early since Firestore migration is no longer supported
+    console.log('Migration script terminated (Firestore support removed)')
+    return
 
+    // Old Firestore code below (disabled)
+    /*
     // Step 1: Get all locations from Firestore
     console.log('📥 Fetching locations from Firestore...')
     const firestoreSnapshot = await adminDb.collection('locations').get()
@@ -61,6 +77,7 @@ async function migrateLocations() {
       console.log('⚠️  No locations to migrate. Exiting.')
       return
     }
+    */
 
     // Step 2: Get Cosmos DB container
     console.log('🔗 Connecting to Cosmos DB...')

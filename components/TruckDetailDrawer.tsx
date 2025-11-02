@@ -14,7 +14,7 @@ import {
   FiActivity
 } from 'react-icons/fi'
 import { MdLocationOn, MdAirplanemodeActive } from 'react-icons/md'
-import type { TruckRecord } from '../lib/trucksFirestore'
+import type { TruckRecord } from '../lib/trucksCosmos'
 
 interface TruckDetailDrawerProps {
   isOpen: boolean

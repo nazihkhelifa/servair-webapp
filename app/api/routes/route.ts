@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../lib/firebase'
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
+import { getContainer } from '../../../lib/cosmosDb'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,17 +15,26 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const assignmentId = searchParams.get('assignmentId')
-    const routesRef = collection(db, 'routes')
+    const container = await getContainer('routes')
 
-    let q
     if (assignmentId) {
-      q = query(routesRef, where('assignmentId', '==', assignmentId))
+      // Query by assignmentId
+      const { resources } = await container.items
+        .query({
+          query: 'SELECT * FROM c WHERE c.assignmentId = @assignmentId ORDER BY c.computedAt DESC',
+          parameters: [{ name: '@assignmentId', value: assignmentId }]
+        })
+        .fetchAll()
+      return NextResponse.json(resources, { headers: corsHeaders })
     } else {
-      q = query(routesRef, orderBy('computedAt', 'desc'))
+      // Get all routes, ordered by computedAt desc
+      const { resources } = await container.items
+        .query({
+          query: 'SELECT * FROM c ORDER BY c.computedAt DESC'
+        })
+        .fetchAll()
+      return NextResponse.json(resources, { headers: corsHeaders })
     }
-    const snap = await getDocs(q)
-    const routes = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    return NextResponse.json(routes, { headers: corsHeaders })
   } catch (e: any) {
     console.error('Error fetching routes:', e)
     return NextResponse.json({ error: 'Failed to fetch routes', details: e.message }, { status: 500, headers: corsHeaders })

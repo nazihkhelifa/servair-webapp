@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../../lib/firebase'
-import { collection, addDoc, query, where, getDocs, doc, updateDoc, getDoc, Timestamp } from 'firebase/firestore'
+import { getLocationsContainer, getContainer } from '../../../../lib/cosmosDb'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,7 +35,7 @@ export async function POST(request: NextRequest) {
     const createdIds: string[] = []
     const updatedItems: Array<{ id: string, before: any, after: any }> = []
 
-    const locationsRef = collection(db, 'locations')
+    const container = await getLocationsContainer()
 
     // Process sequentially to keep audit deterministic
     for (const loc of locations) {
@@ -46,12 +45,23 @@ export async function POST(request: NextRequest) {
       }
 
       // Find existing by unique key: airport + name
-      const q = query(locationsRef, where('airport', '==', loc.airport), where('name', '==', loc.name))
-      const snap = await getDocs(q)
+      const { resources: existing } = await container.items
+        .query({
+          query: 'SELECT * FROM c WHERE c.airport = @airport AND c.name = @name',
+          parameters: [
+            { name: '@airport', value: loc.airport },
+            { name: '@name', value: loc.name }
+          ]
+        })
+        .fetchAll()
 
-      if (snap.empty) {
+      if (existing.length === 0) {
         // Create new
+        const locationId = `location-${loc.airport}-${loc.name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}`
+        const now = new Date().toISOString()
         const data: any = {
+          id: locationId,
+          locationId,
           name: loc.name.trim(),
           airport: loc.airport,
           type: loc.type,
@@ -59,17 +69,21 @@ export async function POST(request: NextRequest) {
           latitude: typeof loc.latitude === 'number' ? loc.latitude : null,
           longitude: typeof loc.longitude === 'number' ? loc.longitude : null,
           isActive: true,
-          createdAt: Timestamp.now(),
+          createdAt: now,
         }
         if (!dryRun) {
-          const docRef = await addDoc(locationsRef, data)
-          createdIds.push(docRef.id)
+          await container.items.create(data)
+          createdIds.push(locationId)
         }
         items.push({ name: loc.name, airport: loc.airport, type: loc.type, status: dryRun ? 'create' : 'created', message: dryRun ? 'Would create' : 'Created' })
       } else {
         // Existing found — check if update is needed
-        const existingDoc = snap.docs[0]
-        const before = existingDoc.data()
+        const existingDoc = existing[0]
+        const before = {
+          latitude: existingDoc.latitude ?? null,
+          longitude: existingDoc.longitude ?? null,
+          description: existingDoc.description ?? null,
+        }
         const id = existingDoc.id
 
         const next: any = {}
@@ -82,9 +96,10 @@ export async function POST(request: NextRequest) {
           items.push({ name: loc.name, airport: loc.airport, type: loc.type, status: 'noop', message: 'No changes' })
         } else {
           if (!dryRun) {
-            next.updatedAt = Timestamp.now()
-            await updateDoc(doc(db, 'locations', id), next)
-            updatedItems.push({ id, before: { latitude: before.latitude ?? null, longitude: before.longitude ?? null, description: before.description ?? null }, after: next })
+            next.updatedAt = new Date().toISOString()
+            const updatedDoc = { ...existingDoc, ...next }
+            await container.items.upsert(updatedDoc)
+            updatedItems.push({ id, before, after: next })
           }
           items.push({ name: loc.name, airport: loc.airport, type: loc.type, status: dryRun ? 'update' : 'updated', message: dryRun ? 'Would update' : 'Updated' })
         }
@@ -93,15 +108,18 @@ export async function POST(request: NextRequest) {
 
     let auditId: string | null = null
     if (!dryRun) {
-      const auditsRef = collection(db, 'location_seeding_audits')
-      const auditDoc = await addDoc(auditsRef, {
+      // Store audit in Cosmos DB
+      const auditsContainer = await getContainer('location_seeding_audits')
+      const auditDoc = {
+        id: `audit-${Date.now()}`,
         createdIds,
         updatedItems,
         createdCount: createdIds.length,
         updatedCount: updatedItems.length,
         totalProcessed: items.length,
-        createdAt: Timestamp.now(),
-      })
+        createdAt: new Date().toISOString(),
+      }
+      await auditsContainer.items.create(auditDoc)
       auditId = auditDoc.id
     }
 
@@ -111,5 +129,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to seed locations', details: error?.message }, { status: 500, headers: corsHeaders })
   }
 }
-
-

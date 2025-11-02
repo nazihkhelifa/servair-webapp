@@ -19,7 +19,7 @@ import {
 import { MdLocationOn } from 'react-icons/md'
 import VerticalSidebar from '../../components/VerticalSidebar'
 import TruckDetailDrawer from '../../components/TruckDetailDrawer'
-import type { TruckRecord, TruckStatus } from '../../lib/trucksFirestore'
+import type { TruckRecord, TruckStatus } from '../../lib/trucksCosmos'
 
 interface TrackingSnapshot {
   driverId?: string | null

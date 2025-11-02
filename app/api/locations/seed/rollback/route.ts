@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../../../lib/firebase'
-import { collection, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { getLocationsContainer, getContainer } from '../../../../../../lib/cosmosDb'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,20 +19,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'auditId is required' }, { status: 400, headers: corsHeaders })
     }
 
-    const auditRef = doc(db, 'location_seeding_audits', auditId)
-    const auditSnap = await getDoc(auditRef)
-    if (!auditSnap.exists()) {
+    const auditsContainer = await getContainer('location_seeding_audits')
+    const locationsContainer = await getLocationsContainer()
+    
+    const { resource: audit } = await auditsContainer.item(auditId, auditId).read()
+    if (!audit) {
       return NextResponse.json({ error: 'Audit not found' }, { status: 404, headers: corsHeaders })
     }
 
-    const audit = auditSnap.data() as any
     const results: any[] = []
 
     // Delete created docs
     const createdIds: string[] = audit?.createdIds || []
     for (const id of createdIds) {
       try {
-        await deleteDoc(doc(db, 'locations', id))
+        await locationsContainer.item(id, id).delete()
         results.push({ id, status: 'deleted', message: 'Created doc deleted' })
       } catch (e: any) {
         results.push({ id, status: 'error', message: e?.message || 'Failed to delete created doc' })
@@ -44,12 +44,16 @@ export async function POST(request: NextRequest) {
     const updatedItems: Array<{ id: string, before: any }> = audit?.updatedItems || []
     for (const u of updatedItems) {
       try {
-        const upd: any = {}
-        if ('latitude' in u.before) upd.latitude = u.before.latitude ?? null
-        if ('longitude' in u.before) upd.longitude = u.before.longitude ?? null
-        if ('description' in u.before) upd.description = u.before.description ?? null
-        await updateDoc(doc(db, 'locations', u.id), upd)
-        results.push({ id: u.id, status: 'reverted', message: 'Updated doc reverted' })
+        const { resource: existing } = await locationsContainer.item(u.id, u.id).read()
+        if (existing) {
+          const reverted = { ...existing }
+          if ('latitude' in u.before) reverted.latitude = u.before.latitude ?? null
+          if ('longitude' in u.before) reverted.longitude = u.before.longitude ?? null
+          if ('description' in u.before) reverted.description = u.before.description ?? null
+          reverted.updatedAt = new Date().toISOString()
+          await locationsContainer.items.upsert(reverted)
+          results.push({ id: u.id, status: 'reverted', message: 'Updated doc reverted' })
+        }
       } catch (e: any) {
         results.push({ id: u.id, status: 'error', message: e?.message || 'Failed to revert updated doc' })
       }
@@ -61,5 +65,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to rollback', details: error?.message }, { status: 500, headers: corsHeaders })
   }
 }
-
-
