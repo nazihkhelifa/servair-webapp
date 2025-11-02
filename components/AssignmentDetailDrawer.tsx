@@ -732,50 +732,45 @@ export default function AssignmentDetailDrawer({
               </h3>
             </div>
             <div className="p-6 space-y-4">
-              {/* Start and Destination Route - Vertical Layout */}
+              {/* Start and Destination Route - Horizontal Layout */}
               <div className="py-2">
-                {/* Start Location */}
-                <div className="flex items-start gap-3 relative">
-                  <div className="flex-shrink-0 pt-0.5">
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Start Location */}
+                  <div className="flex items-center gap-2">
                     <img 
                       src="/source-marker-icon.png" 
                       alt="Start" 
-                      className="w-3.5 h-3.5 object-contain"
+                      className="w-4 h-4 object-contain flex-shrink-0"
                     />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                    <span className="text-sm text-gray-900 font-medium">
                       {assignment.startLocation || 'Base'}
-                    </div>
-                    <div className="text-xs text-gray-600 mb-1">
+                    </span>
+                    <span className="text-xs text-gray-600">
                       {assignment.startTime || formatTime(assignment.createdAt)}
-                    </div>
+                    </span>
                     {startLocationData?.description && (
-                      <p className="text-xs text-gray-500">{startLocationData.description}</p>
+                      <span className="text-xs text-gray-500">({startLocationData.description})</span>
                     )}
                   </div>
-                  {/* Connecting Line */}
-                  <div className="absolute left-[7px] top-[14px] bottom-0 w-0.5 bg-gray-300 -translate-x-1/2" style={{ height: 'calc(100% + 12px)' }}></div>
-                </div>
-                
-                {/* Destination */}
-                <div className="flex items-start gap-3 mt-3 relative">
-                  <div className="flex-shrink-0 pt-0.5">
+                  
+                  {/* Line Separator */}
+                  <div className="flex-shrink-0 w-8 h-0.5 bg-gray-300"></div>
+                  
+                  {/* Destination */}
+                  <div className="flex items-center gap-2">
                     <img 
                       src="/destination-marker-icon.png" 
                       alt="Destination" 
-                      className="w-3.5 h-3.5 object-contain"
+                      className="w-4 h-4 object-contain flex-shrink-0"
                     />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                    <span className="text-sm text-gray-900 font-medium">
                       {assignment.destination}
-                    </div>
-                    <div className="text-xs text-gray-600 mb-1">
+                    </span>
+                    <span className="text-xs text-gray-600">
                       {assignment.dueTime || formatTime(assignment.dueDate)}
-                    </div>
+                    </span>
                     {destinationData?.description && (
-                      <p className="text-xs text-gray-500">{destinationData.description}</p>
+                      <span className="text-xs text-gray-500">({destinationData.description})</span>
                     )}
                   </div>
                 </div>

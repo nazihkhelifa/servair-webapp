@@ -74,6 +74,11 @@ export default function TasksPage() {
   const [startLocations, setStartLocations] = useState<any[]>([])
   const [destinationLocations, setDestinationLocations] = useState<any[]>([])
   
+  // Overview date range state
+  const [overviewDateRange, setOverviewDateRange] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all')
+  const [overviewStartDate, setOverviewStartDate] = useState('')
+  const [overviewEndDate, setOverviewEndDate] = useState('')
+  
   // Assignment Detail Drawer state
   const [selectedAssignment, setSelectedAssignment] = useState<Task | null>(null)
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false)
@@ -470,9 +475,59 @@ export default function TasksPage() {
     }
   }
   
-  const pendingTasks = tasks.filter(t => t.status === 'pending').length
-  const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length
-  const completedTasks = tasks.filter(t => t.status === 'completed').length
+  // Get date range for overview stats
+  const getOverviewDateRange = () => {
+    if (overviewDateRange === 'all') return null
+    
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    
+    let start: Date
+    let end: Date = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) // End of today
+    
+    switch (overviewDateRange) {
+      case 'today':
+        start = today
+        break
+      case 'week':
+        const dayOfWeek = today.getDay()
+        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+        start = new Date(today.getTime() - daysToMonday * 24 * 60 * 60 * 1000)
+        break
+      case 'month':
+        start = new Date(today.getFullYear(), today.getMonth(), 1)
+        end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59)
+        break
+      case 'custom':
+        if (overviewStartDate && overviewEndDate) {
+          start = new Date(overviewStartDate)
+          end = new Date(overviewEndDate)
+          end.setHours(23, 59, 59, 999)
+        } else {
+          return null
+        }
+        break
+      default:
+        return null
+    }
+    
+    return { start, end }
+  }
+
+  // Filter tasks by overview date range
+  const overviewDateRangeFilter = getOverviewDateRange()
+  const overviewFilteredTasks = overviewDateRangeFilter
+    ? tasks.filter(task => {
+        const taskDate = task.createdAt
+        return taskDate >= overviewDateRangeFilter.start && taskDate <= overviewDateRangeFilter.end
+      })
+    : tasks
+
+  // Calculate stats based on filtered tasks
+  const pendingTasks = overviewFilteredTasks.filter(t => t.status === 'pending').length
+  const inProgressTasks = overviewFilteredTasks.filter(t => t.status === 'in-progress').length
+  const completedTasks = overviewFilteredTasks.filter(t => t.status === 'completed').length
+  const totalTasksForOverview = overviewFilteredTasks.length
   
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: '#F5F5F5' }}>
@@ -495,89 +550,95 @@ export default function TasksPage() {
             </button>
           </div>
           
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FiCheckCircle className="h-6 w-6 text-blue-600" />
+          {/* Main Layout: Left Sidebar (Filters) + Right Content (Cards) */}
+          <div className="flex gap-6">
+            {/* Left Sidebar - Stats & Filters (Fixed) */}
+            <div className="w-64 flex-shrink-0">
+              <div className="sticky top-6 space-y-6">
+                {/* Stats Cards */}
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Overview</h3>
+                  </div>
+                  
+                  {/* Date Range Selector */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-medium text-gray-700 mb-2">Time Range</label>
+                    <select
+                      value={overviewDateRange}
+                      onChange={(e) => setOverviewDateRange(e.target.value as any)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="all">All Time</option>
+                      <option value="today">Today</option>
+                      <option value="week">This Week</option>
+                      <option value="month">This Month</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                    
+                    {/* Custom Date Range Inputs */}
+                    {overviewDateRange === 'custom' && (
+                      <div className="mt-2 space-y-2">
+                        <input
+                          type="date"
+                          value={overviewStartDate}
+                          onChange={(e) => setOverviewStartDate(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Start Date"
+                        />
+                        <input
+                          type="date"
+                          value={overviewEndDate}
+                          onChange={(e) => setOverviewEndDate(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="End Date"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FiCheckCircle className="h-5 w-5 text-blue-600" />
+                        <span className="text-sm text-gray-600">Total Tasks</span>
+                      </div>
+                      <span className="text-xl font-bold text-gray-900">{totalTasksForOverview}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FiClock className="h-5 w-5 text-gray-600" />
+                        <span className="text-sm text-gray-600">Pending</span>
+                      </div>
+                      <span className="text-xl font-bold text-gray-900">{pendingTasks}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FiActivity className="h-5 w-5 text-blue-600" />
+                        <span className="text-sm text-gray-600">In Progress</span>
+                      </div>
+                      <span className="text-xl font-bold text-gray-900">{inProgressTasks}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <FiCheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-sm text-gray-600">Completed</span>
+                      </div>
+                      <span className="text-xl font-bold text-gray-900">{completedTasks}</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900">{tasks.length}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <FiClock className="h-6 w-6 text-gray-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Pending</p>
-                  <p className="text-2xl font-bold text-gray-900">{pendingTasks}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FiClock className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">In Progress</p>
-                  <p className="text-2xl font-bold text-gray-900">{inProgressTasks}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <FiCheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">{completedTasks}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* View Toggle & Filters */}
-          <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                      viewMode === 'list' 
-                        ? 'bg-white text-blue-600 shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <FiList className="h-4 w-4" />
-                    <span>List View</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('timeline')}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                      viewMode === 'timeline' 
-                        ? 'bg-white text-blue-600 shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <FiCalendar className="h-4 w-4" />
-                    <span>Timeline View</span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
+
+                {/* Filters */}
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+                
+                {/* Search Bar */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                   <input
                     type="text"
                     placeholder="Search tasks..."
@@ -587,34 +648,65 @@ export default function TasksPage() {
                   />
                 </div>
                 
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
+                {/* Status Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
                 
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value as any)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                {/* Priority Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                  <select
+                    value={priorityFilter}
+                    onChange={(e) => setPriorityFilter(e.target.value as any)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="all">All Priorities</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+
+                {/* View Mode Toggle */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">View</label>
+                  <button
+                    onClick={() => setViewMode(viewMode === 'list' ? 'timeline' : 'list')}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    {viewMode === 'list' ? <FiList className="w-5 h-5" /> : <FiCalendar className="w-5 h-5" />}
+                    {viewMode === 'list' ? 'Timeline View' : 'List View'}
+                  </button>
+                </div>
+
+                {/* New Assignment Button */}
+                <button
+                  onClick={() => setShowTaskForm(!showTaskForm)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
-                  <option value="all">All Priorities</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
+                  <FiPlus className="w-5 h-5" />
+                  New Assignment
+                </button>
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Task Form */}
-          {showTaskForm && (
+
+            {/* Right Content - Task Cards (Scrollable) */}
+            <div className="flex-1 min-w-0">
+              {/* Task Form */}
+              {showTaskForm && (
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border-2 border-blue-600">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Create New Assignment</h3>
               <form onSubmit={handleCreateTask} className="space-y-6">
@@ -942,45 +1034,40 @@ export default function TasksPage() {
                               {task.flightCode && ` • ${task.flightCode}`}
                             </h3>
                             
-                            {/* Start and End Location with Time - Vertical Layout */}
+                            {/* Start and End Location with Time - Horizontal Layout */}
                             <div className="py-2">
-                              {/* Start Location */}
-                              <div className="flex items-start gap-3 relative">
-                                <div className="flex-shrink-0 pt-0.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {/* Start Location */}
+                                <div className="flex items-center gap-1.5">
                                   <img 
                                     src="/source-marker-icon.png" 
                                     alt="Start" 
-                                    className="w-3.5 h-3.5 object-contain"
+                                    className="w-3.5 h-3.5 object-contain flex-shrink-0"
                                   />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                                  <span className="text-sm text-gray-900 font-medium">
                                     {task.startLocation || 'Base'}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
+                                  </span>
+                                  <span className="text-xs text-gray-600">
                                     {formatTime(task.createdAt)}
-                                  </div>
+                                  </span>
                                 </div>
-                                {/* Connecting Line */}
-                                <div className="absolute left-[7px] top-[14px] bottom-0 w-0.5 bg-gray-300 -translate-x-1/2" style={{ height: 'calc(100% + 8px)' }}></div>
-                              </div>
-                              
-                              {/* Destination */}
-                              <div className="flex items-start gap-3 mt-3 relative">
-                                <div className="flex-shrink-0 pt-0.5">
+                                
+                                {/* Line Separator */}
+                                <div className="flex-shrink-0 w-8 h-0.5 bg-gray-300"></div>
+                                
+                                {/* Destination */}
+                                <div className="flex items-center gap-1.5">
                                   <img 
                                     src="/destination-marker-icon.png" 
                                     alt="Destination" 
-                                    className="w-3.5 h-3.5 object-contain"
+                                    className="w-3.5 h-3.5 object-contain flex-shrink-0"
                                   />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                                  <span className="text-sm text-gray-900 font-medium">
                                     {task.destination}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
+                                  </span>
+                                  <span className="text-xs text-gray-600">
                                     {formatTime(task.dueDate)}
-                                  </div>
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -1034,6 +1121,8 @@ export default function TasksPage() {
           ) : (
             <TruckTimeline tasks={filteredTasks} getStatusBadge={getStatusBadge} getPriorityBadge={getPriorityBadge} getStatusIcon={getStatusIcon} />
           )}
+            </div>
+          </div>
         </div>
       </main>
 
