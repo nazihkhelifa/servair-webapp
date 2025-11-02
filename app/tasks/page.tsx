@@ -942,28 +942,46 @@ export default function TasksPage() {
                               {task.flightCode && ` • ${task.flightCode}`}
                             </h3>
                             
-                            {/* Start and End Location */}
-                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                              <div className="flex items-center gap-1">
-                                <FiMapPin className="w-3.5 h-3.5" />
-                                <span className="truncate">{task.startLocation || 'Base'}</span>
+                            {/* Start and End Location with Time - Vertical Layout */}
+                            <div className="py-2">
+                              {/* Start Location */}
+                              <div className="flex items-start gap-3 relative">
+                                <div className="flex-shrink-0 pt-0.5">
+                                  <img 
+                                    src="/source-marker-icon.png" 
+                                    alt="Start" 
+                                    className="w-3.5 h-3.5 object-contain"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                                    {task.startLocation || 'Base'}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {formatTime(task.createdAt)}
+                                  </div>
+                                </div>
+                                {/* Connecting Line */}
+                                <div className="absolute left-[7px] top-[14px] bottom-0 w-0.5 bg-gray-300 -translate-x-1/2" style={{ height: 'calc(100% + 8px)' }}></div>
                               </div>
-                              <FiArrowRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                              <div className="flex items-center gap-1">
-                                <MdLocationOn className="w-3.5 h-3.5" />
-                                <span className="truncate">{task.destination}</span>
-                              </div>
-                            </div>
-
-                            {/* Start and End Time */}
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-1.5">
-                              <div className="flex items-center gap-1">
-                                <FiClock className="w-3.5 h-3.5" />
-                                <span>Start: {formatTime(task.createdAt)}</span>
-                              </div>
-                              <span className="text-gray-400">•</span>
-                              <div className="flex items-center gap-1">
-                                <span>End: {formatTime(task.dueDate)}</span>
+                              
+                              {/* Destination */}
+                              <div className="flex items-start gap-3 mt-3 relative">
+                                <div className="flex-shrink-0 pt-0.5">
+                                  <img 
+                                    src="/destination-marker-icon.png" 
+                                    alt="Destination" 
+                                    className="w-3.5 h-3.5 object-contain"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                                    {task.destination}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    {formatTime(task.dueDate)}
+                                  </div>
+                                </div>
                               </div>
                             </div>
 

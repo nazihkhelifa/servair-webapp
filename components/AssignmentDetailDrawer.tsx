@@ -17,7 +17,8 @@ import {
   FiFlag,
   FiEdit2,
   FiSave,
-  FiXCircle
+  FiXCircle,
+  FiArrowRight
 } from 'react-icons/fi'
 import { MdLocationOn, MdFlight } from 'react-icons/md'
 
@@ -207,6 +208,13 @@ export default function AssignmentDetailDrawer({
     return R * c // Distance in meters
   }
 
+  // Format time only
+  const formatTime = (date: Date) => {
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    return `${hours}:${minutes}`
+  }
+
   const handleViewOnMap = () => {
     if (!assignment) return
     
@@ -300,7 +308,7 @@ export default function AssignmentDetailDrawer({
       case 'completed':
         return 'bg-green-100 text-green-700'
       case 'in-progress':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-gray-100 text-gray-700'
       case 'cancelled':
         return 'bg-red-100 text-red-700'
       default:
@@ -324,7 +332,7 @@ export default function AssignmentDetailDrawer({
       case 'completed':
         return <FiCheckCircle className="h-5 w-5 text-green-600" />
       case 'in-progress':
-        return <FiActivity className="h-5 w-5 text-blue-600" />
+        return <FiActivity className="h-5 w-5 text-gray-900" />
       case 'cancelled':
         return <FiAlertCircle className="h-5 w-5 text-red-600" />
       default:
@@ -343,24 +351,32 @@ export default function AssignmentDetailDrawer({
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-gradient-to-b from-white via-white to-[#F9FAFB] apple-shadow-lg z-50 overflow-y-auto transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
+      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white z-50 overflow-y-auto transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 glass-effect border-b border-gray-200/50 px-8 py-6">
-          <div className="flex items-start justify-between mb-5">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-gray-100/80 rounded-2xl">
-                  {getStatusIcon(assignment.status)}
-                </div>
-                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">{assignment.title}</h2>
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-5">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-4 flex-1">
+              {/* Truck Image */}
+              <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-white rounded-xl overflow-hidden border border-gray-200">
+                <img 
+                  src="/truck.png" 
+                  alt="Truck" 
+                  className="w-full h-full object-contain p-2"
+                />
               </div>
-              <p className="text-gray-500 text-sm ml-[52px]">Assignment #{assignment.id.slice(0, 8)}</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl font-semibold text-gray-900 tracking-tight mb-1 truncate">
+                  {assignment.destination || assignment.title}
+                  {assignment.flightCode && ` • ${assignment.flightCode}`}
+                </h2>
+                <p className="text-xs text-gray-500">Assignment #{assignment.id.slice(0, 8)}</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {!isEditMode ? (
                 <button
                   onClick={() => setIsEditMode(true)}
-                  className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-blue-600 active:scale-95"
+                  className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-black active:scale-95"
                   title="Edit assignment"
                 >
                   <FiEdit2 className="h-5 w-5" />
@@ -370,7 +386,7 @@ export default function AssignmentDetailDrawer({
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="p-2.5 hover:bg-blue-100/80 active:bg-blue-200/80 rounded-xl apple-transition text-blue-600 hover:text-blue-700 active:scale-95 disabled:opacity-50"
+                    className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-black hover:text-gray-900 active:scale-95 disabled:opacity-50"
                     title="Save changes"
                   >
                     <FiSave className="h-5 w-5" />
@@ -409,7 +425,7 @@ export default function AssignmentDetailDrawer({
               <select
                 value={editForm.status}
                 onChange={(e) => setEditForm({...editForm, status: e.target.value as any})}
-                className="px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
               >
                 <option value="pending">PENDING</option>
                 <option value="in-progress">IN PROGRESS</option>
@@ -419,7 +435,7 @@ export default function AssignmentDetailDrawer({
               <select
                 value={editForm.priority}
                 onChange={(e) => setEditForm({...editForm, priority: e.target.value as any})}
-                className="px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-black"
               >
                 <option value="low">LOW PRIORITY</option>
                 <option value="medium">MEDIUM PRIORITY</option>
@@ -430,14 +446,14 @@ export default function AssignmentDetailDrawer({
         </div>
 
         {/* Content */}
-        <div className="p-8 space-y-5">
+        <div className="p-6 space-y-4">
           {isEditMode ? (
             /* Edit Form */
             <div className="space-y-5">
               {/* Basic Information */}
-              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
-                  <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="text-base font-semibold text-gray-900">Basic Information</h3>
                 </div>
                 <div className="p-6 space-y-4">
                   <div>
@@ -446,7 +462,7 @@ export default function AssignmentDetailDrawer({
                       type="text"
                       value={editForm.title}
                       onChange={(e) => setEditForm({...editForm, title: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       required
                     />
                   </div>
@@ -456,7 +472,7 @@ export default function AssignmentDetailDrawer({
                       value={editForm.description}
                       onChange={(e) => setEditForm({...editForm, description: e.target.value})}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -465,7 +481,7 @@ export default function AssignmentDetailDrawer({
                       <select
                         value={editForm.truck}
                         onChange={(e) => setEditForm({...editForm, truck: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         required
                       >
                         <option value="">Select truck</option>
@@ -481,7 +497,7 @@ export default function AssignmentDetailDrawer({
                       <select
                         value={editForm.driver}
                         onChange={(e) => setEditForm({...editForm, driver: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       >
                         <option value="">Unassigned</option>
                         {availableDrivers.map((driver) => (
@@ -497,7 +513,7 @@ export default function AssignmentDetailDrawer({
                     <select
                       value={editForm.airport}
                       onChange={(e) => setEditForm({...editForm, airport: e.target.value as 'CDG' | 'ORY'})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     >
                       <option value="CDG">CDG - Charles de Gaulle</option>
                       <option value="ORY">ORY - Orly</option>
@@ -507,9 +523,9 @@ export default function AssignmentDetailDrawer({
               </div>
 
               {/* Route Information */}
-              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                     <FiNavigation className="h-5 w-5" />
                     Route Details
                   </h3>
@@ -520,7 +536,7 @@ export default function AssignmentDetailDrawer({
                     <select
                       value={editForm.startLocation}
                       onChange={(e) => setEditForm({...editForm, startLocation: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     >
                       <option value="">Select location</option>
                       {startLocations.map((loc) => (
@@ -535,7 +551,7 @@ export default function AssignmentDetailDrawer({
                     <select
                       value={editForm.destination}
                       onChange={(e) => setEditForm({...editForm, destination: e.target.value})}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       required
                     >
                       <option value="">Select destination</option>
@@ -550,9 +566,9 @@ export default function AssignmentDetailDrawer({
               </div>
 
               {/* Time Information */}
-              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                     <FiCalendar className="h-5 w-5" />
                     Schedule
                   </h3>
@@ -565,7 +581,7 @@ export default function AssignmentDetailDrawer({
                         type="date"
                         value={editForm.startDate}
                         onChange={(e) => setEditForm({...editForm, startDate: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         required
                       />
                     </div>
@@ -575,7 +591,7 @@ export default function AssignmentDetailDrawer({
                         type="time"
                         value={editForm.startTime}
                         onChange={(e) => setEditForm({...editForm, startTime: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       />
                     </div>
                   </div>
@@ -586,7 +602,7 @@ export default function AssignmentDetailDrawer({
                         type="date"
                         value={editForm.dueDate}
                         onChange={(e) => setEditForm({...editForm, dueDate: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         required
                       />
                     </div>
@@ -596,7 +612,7 @@ export default function AssignmentDetailDrawer({
                         type="time"
                         value={editForm.dueTime}
                         onChange={(e) => setEditForm({...editForm, dueTime: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       />
                     </div>
                   </div>
@@ -604,9 +620,9 @@ export default function AssignmentDetailDrawer({
               </div>
 
               {/* Flight Information */}
-              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                     <MdFlight className="h-5 w-5" />
                     Flight Information (Optional)
                   </h3>
@@ -619,7 +635,7 @@ export default function AssignmentDetailDrawer({
                         type="text"
                         value={editForm.flightCode}
                         onChange={(e) => setEditForm({...editForm, flightCode: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       />
                     </div>
                     <div>
@@ -628,7 +644,7 @@ export default function AssignmentDetailDrawer({
                         type="text"
                         value={editForm.gate}
                         onChange={(e) => setEditForm({...editForm, gate: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       />
                     </div>
                   </div>
@@ -639,7 +655,7 @@ export default function AssignmentDetailDrawer({
                         type="text"
                         value={editForm.flightOrigin}
                         onChange={(e) => setEditForm({...editForm, flightOrigin: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       />
                     </div>
                     <div>
@@ -648,7 +664,7 @@ export default function AssignmentDetailDrawer({
                         type="text"
                         value={editForm.flightDestination}
                         onChange={(e) => setEditForm({...editForm, flightDestination: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       />
                     </div>
                   </div>
@@ -659,7 +675,7 @@ export default function AssignmentDetailDrawer({
                         type="text"
                         value={editForm.theoreticalHour}
                         onChange={(e) => setEditForm({...editForm, theoreticalHour: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         placeholder="HH:MM"
                       />
                     </div>
@@ -669,7 +685,7 @@ export default function AssignmentDetailDrawer({
                         type="text"
                         value={editForm.planeType}
                         onChange={(e) => setEditForm({...editForm, planeType: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                       />
                     </div>
                   </div>
@@ -681,7 +697,7 @@ export default function AssignmentDetailDrawer({
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSaving ? (
                     <>
@@ -707,94 +723,99 @@ export default function AssignmentDetailDrawer({
           ) : (
             /* View Mode - Original Content */
             <>
-          {/* Quick Actions */}
-          <div className="glass-card rounded-3xl apple-shadow p-5">
-            <button
-              onClick={handleViewOnMap}
-              className="w-full flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl font-semibold apple-transition bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white shadow-lg hover:shadow-xl"
-            >
-              <FiMap className="h-5 w-5" />
-              View Route on Map
-            </button>
-          </div>
-
           {/* Route Information */}
-          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
-            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-gray-100/80 rounded-xl">
-                  <FiNavigation className="h-5 w-5 text-gray-700" />
-                </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <FiNavigation className="h-5 w-5 text-gray-700" />
                 Route Details
               </h3>
             </div>
-            <div className="p-6 space-y-5">
-              {/* Start Location */}
-              <div className="flex items-start gap-4 pb-5 border-b border-gray-100/50">
-                <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl shadow-sm">
-                  <FiFlag className="h-5 w-5 text-gray-700" />
+            <div className="p-6 space-y-4">
+              {/* Start and Destination Route - Vertical Layout */}
+              <div className="py-2">
+                {/* Start Location */}
+                <div className="flex items-start gap-3 relative">
+                  <div className="flex-shrink-0 pt-0.5">
+                    <img 
+                      src="/source-marker-icon.png" 
+                      alt="Start" 
+                      className="w-3.5 h-3.5 object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                      {assignment.startLocation || 'Base'}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">
+                      {assignment.startTime || formatTime(assignment.createdAt)}
+                    </div>
+                    {startLocationData?.description && (
+                      <p className="text-xs text-gray-500">{startLocationData.description}</p>
+                    )}
+                  </div>
+                  {/* Connecting Line */}
+                  <div className="absolute left-[7px] top-[14px] bottom-0 w-0.5 bg-gray-300 -translate-x-1/2" style={{ height: 'calc(100% + 12px)' }}></div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Start Location</p>
-                  <p className="text-base font-semibold text-gray-900 mb-1">{assignment.startLocation}</p>
-                  {startLocationData?.description && (
-                    <p className="text-sm text-gray-500 mt-1.5">{startLocationData.description}</p>
-                  )}
-                  {startLocationData?.latitude && startLocationData?.longitude && (
-                    <p className="text-xs text-gray-400 mt-2 font-mono bg-gray-50/80 px-2 py-1 rounded-lg inline-block">
-                      {startLocationData.latitude.toFixed(4)}, {startLocationData.longitude.toFixed(4)}
-                    </p>
-                  )}
+                
+                {/* Destination */}
+                <div className="flex items-start gap-3 mt-3 relative">
+                  <div className="flex-shrink-0 pt-0.5">
+                    <img 
+                      src="/destination-marker-icon.png" 
+                      alt="Destination" 
+                      className="w-3.5 h-3.5 object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-900 font-medium leading-tight mb-0.5 break-words">
+                      {assignment.destination}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">
+                      {assignment.dueTime || formatTime(assignment.dueDate)}
+                    </div>
+                    {destinationData?.description && (
+                      <p className="text-xs text-gray-500">{destinationData.description}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Distance & ETA */}
               {distance && (
-                <div className="flex items-center justify-center gap-8 py-5 bg-gradient-to-br from-gray-50/80 to-gray-100/50 rounded-2xl shadow-sm">
+                <div className="flex items-center justify-center gap-8 py-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="text-center">
-                    <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Distance</p>
-                    <p className="text-xl font-bold text-gray-900 tracking-tight">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Distance</p>
+                    <p className="text-lg font-bold text-gray-900">
                       {distance < 1000 ? `${Math.round(distance)} m` : `${(distance / 1000).toFixed(2)} km`}
                     </p>
                   </div>
                   {eta && (
                     <div className="text-center">
-                      <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Est. Arrival</p>
-                      <p className="text-xl font-bold text-gray-900 tracking-tight">{eta}</p>
+                      <p className="text-xs font-medium text-gray-500 mb-1">Est. Arrival</p>
+                      <p className="text-lg font-bold text-gray-900">{eta}</p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Destination */}
-              <div className="flex items-start gap-4 pt-2">
-                <div className="p-3 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl shadow-sm">
-                  <MdLocationOn className="h-5 w-5 text-gray-700" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Destination</p>
-                  <p className="text-base font-semibold text-gray-900 mb-1">{assignment.destination}</p>
-                  {destinationData?.description && (
-                    <p className="text-sm text-gray-500 mt-1.5">{destinationData.description}</p>
-                  )}
-                  {destinationData?.latitude && destinationData?.longitude && (
-                    <p className="text-xs text-gray-400 mt-2 font-mono bg-gray-50/80 px-2 py-1 rounded-lg inline-block">
-                      {destinationData.latitude.toFixed(4)}, {destinationData.longitude.toFixed(4)}
-                    </p>
-                  )}
-                </div>
-              </div>
+              {/* Quick Action */}
+              <button
+                onClick={handleViewOnMap}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium bg-black hover:bg-gray-900 active:scale-[0.98] text-white transition-all"
+              >
+                <FiMap className="h-4 w-4" />
+                View Route on Map
+              </button>
             </div>
           </div>
 
           {/* Flight Information */}
           {assignment.flightCode && (
-            <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
-              <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
-                  <div className="p-2 bg-gray-100/80 rounded-xl">
-                    <MdFlight className="h-5 w-5 text-gray-700" />
-                  </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                  <MdFlight className="h-5 w-5 text-gray-700" />
                   Flight Information
                 </h3>
               </div>
@@ -842,11 +863,11 @@ export default function AssignmentDetailDrawer({
           )}
 
           {/* Assignment Details */}
-          <div className="glass-card rounded-3xl apple-shadow overflow-hidden apple-hover">
-            <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
-              <h3 className="text-lg font-semibold text-gray-900">Assignment Details</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-base font-semibold text-gray-900">Assignment Details</h3>
             </div>
-            <div className="p-6 space-y-5">
+            <div className="p-6 space-y-4">
               {/* Truck & Driver */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
@@ -924,7 +945,7 @@ export default function AssignmentDetailDrawer({
           </div>
 
           {/* Timestamps */}
-          <div className="glass-card rounded-2xl apple-shadow p-5">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p className="text-xs font-medium text-gray-500">
               Created: {assignment.createdAt.toLocaleString('en-US', { 
                 month: 'short', 
