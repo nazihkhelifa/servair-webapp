@@ -536,23 +536,42 @@ export default function TasksPage() {
       <main className="flex-1 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
+          <div className="flex flex-col items-center mb-6">
+            <div className="text-center mb-4">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Tasks & Assignments</h1>
               <p className="text-gray-500">Manage your fleet operations</p>
             </div>
-            <button 
-              onClick={() => setShowTaskForm(!showTaskForm)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-colors"
-            >
-              <FiPlus className="h-5 w-5" />
-              <span>New Task</span>
-            </button>
+            {/* View Mode Toggle - Centered */}
+            <div className="flex gap-1 bg-white border-2 border-black rounded-lg p-1 shadow-sm">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-6 py-2 rounded-md flex items-center gap-2 transition-all font-medium ${
+                  viewMode === 'list' 
+                    ? 'bg-black text-white shadow-sm' 
+                    : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                }`}
+              >
+                <FiList className="h-4 w-4" />
+                <span>List</span>
+              </button>
+              <button
+                onClick={() => setViewMode('timeline')}
+                className={`px-6 py-2 rounded-md flex items-center gap-2 transition-all font-medium ${
+                  viewMode === 'timeline' 
+                    ? 'bg-black text-white shadow-sm' 
+                    : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                }`}
+              >
+                <FiCalendar className="h-4 w-4" />
+                <span>Timeline</span>
+              </button>
+            </div>
           </div>
           
           {/* Main Layout: Left Sidebar (Filters) + Right Content (Cards) */}
           <div className="flex gap-6">
-            {/* Left Sidebar - Stats & Filters (Fixed) */}
+            {/* Left Sidebar - Stats & Filters (Fixed) - Hidden in timeline view */}
+            {viewMode !== 'timeline' && (
             <div className="w-64 flex-shrink-0">
               <div className="sticky top-6 space-y-6">
                 {/* Stats Cards */}
@@ -567,7 +586,7 @@ export default function TasksPage() {
                     <select
                       value={overviewDateRange}
                       onChange={(e) => setOverviewDateRange(e.target.value as any)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                     >
                       <option value="all">All Time</option>
                       <option value="today">Today</option>
@@ -583,14 +602,14 @@ export default function TasksPage() {
                           type="date"
                           value={overviewStartDate}
                           onChange={(e) => setOverviewStartDate(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                           placeholder="Start Date"
                         />
                         <input
                           type="date"
                           value={overviewEndDate}
                           onChange={(e) => setOverviewEndDate(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                           placeholder="End Date"
                         />
                       </div>
@@ -654,7 +673,7 @@ export default function TasksPage() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as any)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                   >
                     <option value="all">All Status</option>
                     <option value="pending">Pending</option>
@@ -670,25 +689,13 @@ export default function TasksPage() {
                   <select
                     value={priorityFilter}
                     onChange={(e) => setPriorityFilter(e.target.value as any)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                   >
                     <option value="all">All Priorities</option>
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
                     <option value="low">Low</option>
                   </select>
-                </div>
-
-                {/* View Mode Toggle */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">View</label>
-                  <button
-                    onClick={() => setViewMode(viewMode === 'list' ? 'timeline' : 'list')}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    {viewMode === 'list' ? <FiList className="w-5 h-5" /> : <FiCalendar className="w-5 h-5" />}
-                    {viewMode === 'list' ? 'Timeline View' : 'List View'}
-                  </button>
                 </div>
 
                 {/* New Assignment Button */}
@@ -702,16 +709,17 @@ export default function TasksPage() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Right Content - Task Cards (Scrollable) */}
-            <div className="flex-1 min-w-0">
+            <div className={viewMode === 'timeline' ? 'w-full' : 'flex-1 min-w-0'}>
               {/* Task Form */}
               {showTaskForm && (
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border-2 border-blue-600">
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border-2 border-black">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Create New Assignment</h3>
               <form onSubmit={handleCreateTask} className="space-y-6">
                 {/* Flight Selection Section */}
-                <div className="border-l-4 border-blue-500 pl-4 bg-blue-50 p-4 rounded-r-lg">
+                <div className="border-l-4 border-black pl-4 bg-gray-50 p-4 rounded-r-lg">
                   <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     ✈️ Select Flight
                   </h4>
@@ -721,7 +729,7 @@ export default function TasksPage() {
                       <select
                         value={selectedFlight?.id || ''}
                         onChange={(e) => handleFlightSelect(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                         required
                       >
                         <option value="">Select a flight</option>
@@ -737,11 +745,11 @@ export default function TasksPage() {
                     
                     {/* Display selected flight details */}
                     {selectedFlight && (
-                      <div className="bg-white border border-blue-200 rounded-lg p-3">
+                      <div className="bg-white border border-gray-200 rounded-lg p-3">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                           <div>
                             <span className="text-gray-600">Flight:</span>
-                            <span className="ml-2 font-semibold text-blue-600">{selectedFlight.flightCode}</span>
+                            <span className="ml-2 font-semibold text-gray-900">{selectedFlight.flightCode}</span>
                           </div>
                           <div>
                             <span className="text-gray-600">Route:</span>
@@ -790,7 +798,7 @@ export default function TasksPage() {
                         value={newTask.title}
                         onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
                         placeholder="Enter task title"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white" 
                         required
                       />
                     </div>
@@ -799,7 +807,7 @@ export default function TasksPage() {
                       <select 
                         value={newTask.truck}
                         onChange={(e) => setNewTask(prev => ({ ...prev, truck: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                         required
                       >
                         <option value="">Select a truck</option>
@@ -815,7 +823,7 @@ export default function TasksPage() {
                       <select 
                         value={newTask.driver}
                         onChange={(e) => setNewTask(prev => ({ ...prev, driver: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                         required
                       >
                         <option value="">Select a driver</option>
@@ -835,7 +843,7 @@ export default function TasksPage() {
                           setNewTask(prev => ({ ...prev, airport, startLocation: '', destination: '' }))
                           setSelectedAirport(airport)
                         }}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                         required
                       >
                         <option value="CDG">CDG - Charles de Gaulle</option>
@@ -847,7 +855,7 @@ export default function TasksPage() {
                       <select 
                         value={newTask.startLocation}
                         onChange={(e) => setNewTask(prev => ({ ...prev, startLocation: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white" 
                         required
                       >
                         <option value="">Select start location</option>
@@ -863,7 +871,7 @@ export default function TasksPage() {
                       <select 
                         value={newTask.destination}
                         onChange={(e) => setNewTask(prev => ({ ...prev, destination: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white" 
                         required
                       >
                         <option value="">Select destination</option>
@@ -879,7 +887,7 @@ export default function TasksPage() {
                       <select 
                         value={newTask.priority}
                         onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value as Task['priority'] }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -891,7 +899,7 @@ export default function TasksPage() {
                       <select 
                         value={newTask.status}
                         onChange={(e) => setNewTask(prev => ({ ...prev, status: e.target.value as Task['status'] }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white"
                       >
                         <option value="pending">Pending</option>
                         <option value="in-progress">In Progress</option>
@@ -905,7 +913,7 @@ export default function TasksPage() {
                         type="date" 
                         value={newTask.startDate}
                         onChange={(e) => setNewTask(prev => ({ ...prev, startDate: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white" 
                         required
                       />
                     </div>
@@ -915,7 +923,7 @@ export default function TasksPage() {
                         type="time" 
                         value={newTask.startTime}
                         onChange={(e) => setNewTask(prev => ({ ...prev, startTime: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white" 
                       />
                     </div>
                     <div>
@@ -924,7 +932,7 @@ export default function TasksPage() {
                         type="date" 
                         value={newTask.dueDate}
                         onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white" 
                         required
                       />
                     </div>
@@ -934,7 +942,7 @@ export default function TasksPage() {
                         type="time" 
                         value={newTask.dueTime}
                         onChange={(e) => setNewTask(prev => ({ ...prev, dueTime: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" 
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black bg-white" 
                       />
                     </div>
                   </div>
@@ -961,7 +969,7 @@ export default function TasksPage() {
                   </button>
                   <button 
                     type="submit" 
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors font-medium"
                   >
                     Create Task
                   </button>
@@ -1119,7 +1127,7 @@ export default function TasksPage() {
               })}
             </div>
           ) : (
-            <TruckTimeline tasks={filteredTasks} getStatusBadge={getStatusBadge} getPriorityBadge={getPriorityBadge} getStatusIcon={getStatusIcon} />
+            <TruckTimeline tasks={filteredTasks} getStatusBadge={getStatusBadge} getPriorityBadge={getPriorityBadge} getStatusIcon={getStatusIcon} availableTrucks={availableTrucks} availableDrivers={availableDrivers} />
           )}
             </div>
           </div>
@@ -1180,9 +1188,11 @@ interface TruckTimelineProps {
   getStatusBadge: (status: Task['status']) => string
   getPriorityBadge: (priority: Task['priority']) => string
   getStatusIcon: (status: Task['status']) => React.ReactNode
+  availableTrucks?: any[]
+  availableDrivers?: any[]
 }
 
-function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon }: TruckTimelineProps) {
+function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon, availableTrucks = [], availableDrivers = [] }: TruckTimelineProps) {
   // Date range filter state
   const [dateRangeMode, setDateRangeMode] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all')
   const [customStartDate, setCustomStartDate] = useState('')
@@ -1372,7 +1382,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
   }
 
   const rowHeight = 72
-  const sidebarWidth = 320
+  const sidebarWidth = 160 // Reduced by 50% from 320
   
   const statusColors = {
     'completed': { bg: 'bg-green-500', border: 'border-green-600', text: 'text-green-700' },
@@ -1385,19 +1395,9 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
     <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Gantt Chart View</h2>
-            <p className="text-sm text-gray-500">Visual timeline of tasks scheduled for each truck</p>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-xs">
-            <div className="font-semibold text-blue-900 mb-1">Timeline Info</div>
-            <div className="text-blue-700 space-y-0.5">
-              <div>Period: {minDate.toLocaleDateString()} - {effectiveMaxDate.toLocaleDateString()}</div>
-              <div>Days: {daysRange} | Intervals: {intervalMarkers.length} (30min each)</div>
-              <div>Scale: Each column = 30 minutes</div>
-            </div>
-          </div>
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Gantt Chart View</h2>
+          <p className="text-sm text-gray-500">Visual timeline of tasks scheduled for each truck</p>
         </div>
 
         {/* Date Range Filter Controls */}
@@ -1409,7 +1409,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                 onClick={() => setDateRangeMode('all')}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                   dateRangeMode === 'all'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-black text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1419,7 +1419,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                 onClick={() => setDateRangeMode('today')}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                   dateRangeMode === 'today'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-black text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1429,7 +1429,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                 onClick={() => setDateRangeMode('week')}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                   dateRangeMode === 'week'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-black text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1439,7 +1439,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                 onClick={() => setDateRangeMode('month')}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                   dateRangeMode === 'month'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-black text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1449,7 +1449,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                 onClick={() => setDateRangeMode('custom')}
                 className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                   dateRangeMode === 'custom'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-black text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1466,14 +1466,14 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                 type="date"
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               />
               <label className="text-sm text-gray-600">To:</label>
               <input
                 type="date"
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               />
             </div>
           )}
@@ -1498,56 +1498,39 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
       <div className="flex" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
         {/* Fixed Left Sidebar */}
         <div className="flex-shrink-0 border-r border-gray-200 bg-gray-50" style={{ width: `${sidebarWidth}px` }}>
-          {/* Sidebar Header */}
-          <div className="sticky top-0 z-20 bg-gray-100 border-b border-gray-300 px-4 py-4">
-            <div className="text-sm font-semibold text-gray-700">
-              Trucks ({ganttRows.length})
-            </div>
-            <div className="text-[10px] text-gray-500 mt-1">
-              {visibleTasks.length} task{visibleTasks.length !== 1 ? 's' : ''} total
-            </div>
-          </div>
+           {/* Sidebar Header */}
+           <div className="sticky top-0 z-20 bg-gray-100 border-b border-gray-300 px-3 py-3">
+             <div className="text-xs font-semibold text-gray-700">
+               Trucks ({ganttRows.length})
+             </div>
+           </div>
 
           {/* Truck List */}
           <div className="overflow-y-auto" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
             {ganttRows.map((row) => {
               const { truckId, tasks: truckTasks } = row
-              const pendingCount = truckTasks.filter(t => t.status === 'pending').length
-              const inProgressCount = truckTasks.filter(t => t.status === 'in-progress').length
-              const completedCount = truckTasks.filter(t => t.status === 'completed').length
+              const truckInfo = availableTrucks.find(t => t.truckId === truckId)
+              const driverId = truckTasks[0]?.driver
+              const driverInfo = driverId ? availableDrivers.find(d => d.driverId === driverId) : null
+              const driverName = driverInfo?.fullName || driverId || 'Unassigned'
               
               return (
                 <div
                   key={truckId}
-                  className="border-b border-gray-200 px-4 py-4 hover:bg-gray-100 transition-colors"
+                  className="border-b border-gray-200 px-3 py-3 hover:bg-gray-100 transition-colors"
                   style={{ height: `${rowHeight}px` }}
                 >
-                  <div className="flex items-start gap-3 h-full">
-                    <FiTruck className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+                  <div className="flex items-start gap-2 h-full">
+                    <FiTruck className="h-4 w-4 text-gray-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-gray-900 truncate mb-1">
-                        {truckId}
-                      </h4>
-                      <p className="text-xs text-gray-600 mb-2">
-                        {truckTasks.length} {truckTasks.length === 1 ? 'task' : 'tasks'}
+                      {truckInfo?.type ? (
+                        <p className="text-xs font-medium text-gray-900 truncate mb-0.5">
+                          {truckInfo.type}
+                        </p>
+                      ) : null}
+                      <p className="text-xs text-gray-600 truncate">
+                        {driverName}
                       </p>
-                      <div className="flex items-center gap-2 flex-wrap text-[10px]">
-                        {pendingCount > 0 && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">
-                            {pendingCount} pending
-                          </span>
-                        )}
-                        {inProgressCount > 0 && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
-                            {inProgressCount} in progress
-                          </span>
-                        )}
-                        {completedCount > 0 && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-green-100 text-green-700">
-                            {completedCount} done
-                          </span>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -1568,12 +1551,12 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                   <div
                     key={index}
                     className="flex-shrink-0 border-r border-gray-300 px-2 py-2 flex flex-col items-center justify-center"
-                    style={{ 
-                      width: `${group.intervalCount * thirtyMinIntervalWidth}px`,
-                      backgroundColor: label.isToday ? '#EBF4FF' : '#F9FAFB'
-                    }}
-                  >
-                    <div className={`text-xs font-semibold ${label.isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                     style={{ 
+                       width: `${group.intervalCount * thirtyMinIntervalWidth}px`,
+                       backgroundColor: label.isToday ? '#F3F4F6' : '#F9FAFB'
+                     }}
+                   >
+                     <div className={`text-xs font-semibold ${label.isToday ? 'text-gray-900' : 'text-gray-700'}`}>
                       {label.day}, {label.month} {label.date}
                     </div>
                   </div>
@@ -1608,12 +1591,12 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
                 return (
                   <div
                     key={index}
-                    className={`flex-shrink-0 border-r border-gray-100 px-1 py-1.5 flex items-center justify-center ${
-                      isCurrentTime ? 'bg-blue-50' : 'bg-white'
-                    }`}
-                    style={{ width: `${thirtyMinIntervalWidth}px` }}
-                  >
-                    <div className={`text-[10px] ${isCurrentTime ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
+                     className={`flex-shrink-0 border-r border-gray-100 px-1 py-1.5 flex items-center justify-center ${
+                       isCurrentTime ? 'bg-gray-100' : 'bg-white'
+                     }`}
+                     style={{ width: `${thirtyMinIntervalWidth}px` }}
+                   >
+                     <div className={`text-[10px] ${isCurrentTime ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>
                       {minutes === 0 ? '00' : '30'}
                     </div>
                   </div>
@@ -1621,13 +1604,13 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
               })}
             </div>
 
-            {/* Current Time Indicator Line */}
-            <div
-              className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-20 pointer-events-none"
-              style={{ left: `${getDatePosition(new Date())}%` }}
-            >
-              <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-blue-500 rounded-full shadow" />
-            </div>
+             {/* Current Time Indicator Line */}
+             <div
+               className="absolute top-0 bottom-0 w-0.5 bg-black z-20 pointer-events-none"
+               style={{ left: `${getDatePosition(new Date())}%` }}
+             >
+               <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-black rounded-full shadow" />
+             </div>
           </div>
 
           {/* Task Rows with Gantt Bars */}
@@ -1654,11 +1637,11 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon 
               ))}
             </div>
 
-            {/* Current Day Vertical Line */}
-            <div
-              className="absolute top-0 bottom-0 w-0.5 bg-blue-500/20 z-0 pointer-events-none"
-              style={{ left: `${getDatePosition(new Date())}%` }}
-            />
+             {/* Current Day Vertical Line */}
+             <div
+               className="absolute top-0 bottom-0 w-0.5 bg-black/20 z-0 pointer-events-none"
+               style={{ left: `${getDatePosition(new Date())}%` }}
+             />
 
             {/* Task Bars - Grouped by Truck */}
             {ganttRows.map((row) => {
