@@ -533,15 +533,17 @@ export default function TasksPage() {
     <div className="min-h-screen flex" style={{ backgroundColor: '#F5F5F5' }}>
       <VerticalSidebar activePage="tasks" />
       
-      <main className="flex-1 p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+      <main className="flex-1 flex flex-col">
+        {/* Header - Outside restricted width */}
+        <div className="px-6 pt-6 pb-4">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Tasks & Assignments</h1>
               <p className="text-gray-500">Manage your fleet operations</p>
             </div>
-            {/* View Mode Toggle - Centered */}
+          </div>
+          {/* View Mode Toggle - Centered */}
+          <div className="flex justify-center">
             <div className="flex gap-1 bg-white border-2 border-black rounded-lg p-1 shadow-sm">
               <button
                 onClick={() => setViewMode('list')}
@@ -567,9 +569,13 @@ export default function TasksPage() {
               </button>
             </div>
           </div>
-          
-          {/* Main Layout: Left Sidebar (Filters) + Right Content (Cards) */}
-          <div className="flex gap-6">
+        </div>
+
+        {/* Content - Inside restricted width */}
+        <div className="flex-1 p-6 pt-0">
+          <div className="max-w-7xl mx-auto">
+            {/* Main Layout: Left Sidebar (Filters) + Right Content (Cards) */}
+            <div className="flex gap-6">
             {/* Left Sidebar - Stats & Filters (Fixed) - Hidden in timeline view */}
             {viewMode !== 'timeline' && (
             <div className="w-64 flex-shrink-0">
@@ -1130,6 +1136,7 @@ export default function TasksPage() {
             <TruckTimeline tasks={filteredTasks} getStatusBadge={getStatusBadge} getPriorityBadge={getPriorityBadge} getStatusIcon={getStatusIcon} availableTrucks={availableTrucks} availableDrivers={availableDrivers} />
           )}
             </div>
+          </div>
           </div>
         </div>
       </main>
