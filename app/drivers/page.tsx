@@ -13,8 +13,18 @@ import {
   FiRefreshCcw,
   FiPlus,
   FiEdit2,
-  FiTrash2
+  FiTrash2,
+  FiList,
+  FiCalendar,
+  FiTruck,
+  FiUsers,
+  FiClock,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiActivity
 } from 'react-icons/fi'
+import { MdLocationOn } from 'react-icons/md'
+import Link from 'next/link'
 import VerticalSidebar from '../../components/VerticalSidebar'
 import DriverDetailDrawer from '../../components/DriverDetailDrawer'
 
@@ -46,11 +56,44 @@ const statusColors: Record<DriverStatus, string> = {
   Offline: 'bg-gray-100 text-gray-600'
 }
 
+interface Assignment {
+  id: string
+  title: string
+  truck: string
+  driver: string
+  startLocation: string
+  destination: string
+  airport: string
+  status: 'pending' | 'in-progress' | 'completed' | 'cancelled'
+  priority: 'low' | 'medium' | 'high'
+  createdAt: Date
+  dueDate: Date
+  description: string
+  startDate?: string
+  startTime?: string
+  dueDateOnly?: string
+  dueTime?: string
+  flightId?: string
+  flightCode?: string
+  flightOrigin?: string
+  flightDestination?: string
+  theoreticalHour?: string
+  planeType?: string
+  gate?: string
+  routeId?: string | null
+  routeStatus?: 'pending' | 'ready' | 'error' | null
+  etaMinutes?: number | null
+  totalDistanceMeters?: number | null
+}
+
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<DriverRecord[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | DriverStatus>('all')
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list')
   const [error, setError] = useState<string | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -107,9 +150,78 @@ export default function DriversPage() {
     }
   }, [])
 
+  const fetchAssignments = useCallback(async () => {
+    try {
+      setIsLoadingAssignments(true)
+      const response = await fetch('/api/assignments')
+      if (!response.ok) {
+        throw new Error('Failed to load assignments')
+      }
+      const data = await response.json()
+      
+      // Transform assignments to match Task interface
+      const transformed: Assignment[] = data.map((assignment: any) => {
+        // Parse dates
+        const createdAt = assignment.createdAt 
+          ? new Date(assignment.createdAt)
+          : assignment.startDate && assignment.startTime
+          ? new Date(`${assignment.startDate}T${assignment.startTime || '00:00'}`)
+          : new Date()
+        
+        const dueDate = assignment.dueDate
+          ? new Date(assignment.dueDate)
+          : assignment.dueDateOnly && assignment.dueTime
+          ? new Date(`${assignment.dueDateOnly}T${assignment.dueTime || '23:59'}`)
+          : new Date(createdAt.getTime() + 3600000) // Default 1 hour later
+        
+        return {
+          id: assignment.id || assignment.assignmentId,
+          title: assignment.title || 'Untitled Assignment',
+          truck: assignment.truck || 'Unknown',
+          driver: assignment.driver || 'Unassigned',
+          startLocation: assignment.startLocation || 'Unknown',
+          destination: assignment.destination || 'Unknown',
+          airport: assignment.airport || 'CDG',
+          status: (assignment.status as Assignment['status']) || 'pending',
+          priority: (assignment.priority as Assignment['priority']) || 'medium',
+          createdAt,
+          dueDate,
+          description: assignment.description || '',
+          startDate: assignment.startDate || null,
+          startTime: assignment.startTime || null,
+          dueDateOnly: assignment.dueDateOnly || null,
+          dueTime: assignment.dueTime || null,
+          flightId: assignment.flightId || null,
+          flightCode: assignment.flightCode || null,
+          flightOrigin: assignment.flightOrigin || null,
+          flightDestination: assignment.flightDestination || null,
+          theoreticalHour: assignment.theoreticalHour || null,
+          planeType: assignment.planeType || null,
+          gate: assignment.gate || null,
+          routeId: assignment.routeId || null,
+          routeStatus: assignment.routeStatus || null,
+          etaMinutes: assignment.etaMinutes || null,
+          totalDistanceMeters: assignment.totalDistanceMeters || null
+        }
+      })
+      
+      setAssignments(transformed)
+    } catch (err) {
+      console.error('Failed to load assignments:', err)
+    } finally {
+      setIsLoadingAssignments(false)
+    }
+  }, [])
+
   useEffect(() => {
     fetchDrivers()
   }, [fetchDrivers])
+
+  useEffect(() => {
+    if (viewMode === 'timeline') {
+      fetchAssignments()
+    }
+  }, [viewMode, fetchAssignments])
 
   const filteredDrivers = drivers.filter((driver) => {
     const matchesSearch =
@@ -326,33 +438,62 @@ export default function DriversPage() {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search by name, license, or phone..."
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  aria-label="Search drivers by keyword"
-                />
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                      viewMode === 'list' 
+                        ? 'bg-white text-blue-600 shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <FiList className="h-4 w-4" />
+                    <span>List View</span>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('timeline')}
+                    className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                      viewMode === 'timeline' 
+                        ? 'bg-white text-blue-600 shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <FiCalendar className="h-4 w-4" />
+                    <span>Timeline View</span>
+                  </button>
+                </div>
               </div>
+              
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, license, or phone..."
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Search drivers by keyword"
+                  />
+                </div>
 
-              <div className="flex items-center gap-2">
-                <FiFilter className="text-gray-400 h-5 w-5" />
-                <select
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value as DriverStatus | 'all')}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  aria-label="Filter drivers by status"
-                >
-                  <option value="all">All Status</option>
-                  <option value="Active">Active</option>
-                  <option value="Idle">Idle</option>
-                  <option value="On Break">On Break</option>
-                  <option value="Offline">Offline</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  <FiFilter className="text-gray-400 h-5 w-5" />
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value as DriverStatus | 'all')}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    aria-label="Filter drivers by status"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="Idle">Idle</option>
+                    <option value="On Break">On Break</option>
+                    <option value="Offline">Offline</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -376,6 +517,12 @@ export default function DriversPage() {
                 {searchQuery ? 'Try adjusting your search or filters' : 'Add your first driver to get started'}
               </p>
             </div>
+          ) : viewMode === 'timeline' ? (
+            <DriverTimeline 
+              drivers={filteredDrivers} 
+              assignments={assignments}
+              isLoading={isLoadingAssignments}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredDrivers.map((driver) => (
@@ -667,6 +814,659 @@ export default function DriversPage() {
         }}
         driver={selectedDriver}
       />
+    </div>
+  )
+}
+
+// Driver Timeline Component
+interface DriverTimelineProps {
+  drivers: DriverRecord[]
+  assignments: Assignment[]
+  isLoading: boolean
+}
+
+function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps) {
+  const [dateRangeMode, setDateRangeMode] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
+
+  // Helper functions for status and priority badges
+  const getStatusBadge = (status: Assignment['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-700'
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-700'
+      case 'cancelled':
+        return 'bg-red-100 text-red-700'
+      case 'pending':
+        return 'bg-gray-100 text-gray-600'
+    }
+  }
+
+  const getPriorityBadge = (priority: Assignment['priority']) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-100 text-red-700'
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-700'
+      case 'low':
+        return 'bg-green-100 text-green-700'
+    }
+  }
+
+  const getStatusIcon = (status: Assignment['status']) => {
+    switch (status) {
+      case 'completed':
+        return <FiCheckCircle className="h-5 w-5 text-green-600" />
+      case 'in-progress':
+        return <FiClock className="h-5 w-5 text-blue-600" />
+      case 'cancelled':
+        return <FiAlertCircle className="h-5 w-5 text-red-600" />
+      case 'pending':
+        return <FiClock className="h-5 w-5 text-gray-400" />
+    }
+  }
+
+  // Calculate date range
+  const getDateRange = () => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    switch (dateRangeMode) {
+      case 'today':
+        const endOfToday = new Date(today)
+        endOfToday.setHours(23, 59, 59, 999)
+        return { start: today, end: endOfToday }
+
+      case 'week':
+        const weekStart = new Date(today)
+        const dayOfWeek = weekStart.getDay()
+        const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+        weekStart.setDate(weekStart.getDate() + diff)
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekEnd.getDate() + 6)
+        weekEnd.setHours(23, 59, 59, 999)
+        return { start: weekStart, end: weekEnd }
+
+      case 'month':
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+        monthEnd.setHours(23, 59, 59, 999)
+        return { start: monthStart, end: monthEnd }
+
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          const start = new Date(customStartDate)
+          start.setHours(0, 0, 0, 0)
+          const end = new Date(customEndDate)
+          end.setHours(23, 59, 59, 999)
+          return { start, end }
+        }
+        return null
+
+      case 'all':
+      default:
+        return null
+    }
+  }
+
+  const dateRangeFilter = getDateRange()
+
+  // Filter assignments that overlap with the visible date range
+  const visibleAssignments = dateRangeFilter 
+    ? assignments.filter(assignment => {
+        return assignment.dueDate >= dateRangeFilter.start && assignment.createdAt <= dateRangeFilter.end
+      })
+    : assignments
+
+  // Group assignments by driver (one row per driver)
+  const assignmentsByDriver = visibleAssignments.reduce((acc, assignment) => {
+    if (!assignment.driver || assignment.driver === 'Unassigned') return acc
+    if (!acc[assignment.driver]) {
+      acc[assignment.driver] = []
+    }
+    acc[assignment.driver].push(assignment)
+    return acc
+  }, {} as Record<string, Assignment[]>)
+
+  // Create gantt rows - one per driver, but only for drivers that exist
+  const ganttRows: Array<{ driverId: string; driverName: string; assignments: Assignment[] }> = drivers
+    .filter(driver => assignmentsByDriver[driver.driverId] || assignmentsByDriver[driver.fullName])
+    .map(driver => {
+      const driverAssignments = assignmentsByDriver[driver.driverId] || assignmentsByDriver[driver.fullName] || []
+      return {
+        driverId: driver.driverId,
+        driverName: driver.fullName,
+        assignments: driverAssignments.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      }
+    })
+    .filter(row => row.assignments.length > 0)
+    .sort((a, b) => a.driverName.localeCompare(b.driverName))
+
+  // Get date range for timeline
+  const allDates = visibleAssignments.flatMap(assignment => [assignment.createdAt, assignment.dueDate])
+  
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading assignments...</p>
+      </div>
+    )
+  }
+
+  if (allDates.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+        <FiCalendar className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+        <p className="text-gray-500">No assignments to display in timeline</p>
+        <p className="text-sm text-gray-400 mt-2">Create assignments in the Tasks page to see them here</p>
+      </div>
+    )
+  }
+
+  // Determine min and max dates
+  let minDate: Date
+  let maxDate: Date
+
+  if (dateRangeFilter) {
+    minDate = dateRangeFilter.start
+    maxDate = dateRangeFilter.end
+  } else {
+    const rawMinDate = new Date(Math.min(...allDates.map(d => d.getTime())))
+    const rawMaxDate = new Date(Math.max(...allDates.map(d => d.getTime())))
+    
+    minDate = new Date(rawMinDate)
+    minDate.setHours(0, 0, 0, 0)
+    
+    maxDate = new Date(rawMaxDate)
+    maxDate.setHours(23, 59, 59, 999)
+    
+    const thirtyDaysLater = new Date(minDate)
+    thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30)
+    thirtyDaysLater.setHours(23, 59, 59, 999)
+    if (maxDate < thirtyDaysLater) {
+      maxDate = thirtyDaysLater
+    }
+  }
+
+  const effectiveMaxDate = maxDate
+  const dateRange = effectiveMaxDate.getTime() - minDate.getTime()
+  const daysRange = Math.ceil(dateRange / (1000 * 60 * 60 * 24))
+
+  // Generate 30-minute interval markers
+  const thirtyMinIntervalWidth = 60
+  const totalIntervals = daysRange * 24 * 2
+
+  // Generate date groups (days)
+  const dateGroups: Array<{ date: Date; intervalCount: number }> = []
+  for (let i = 0; i < daysRange; i++) {
+    const date = new Date(minDate)
+    date.setDate(date.getDate() + i)
+    date.setHours(0, 0, 0, 0)
+    dateGroups.push({ date, intervalCount: 48 })
+  }
+
+  // Generate hour markers
+  const hourMarkers: Array<{ date: Date; hour: number }> = []
+  for (let day = 0; day < daysRange; day++) {
+    for (let hour = 0; hour < 24; hour++) {
+      const date = new Date(minDate)
+      date.setDate(date.getDate() + day)
+      date.setHours(hour, 0, 0, 0)
+      hourMarkers.push({ date, hour })
+    }
+  }
+
+  // Generate 30-minute interval markers
+  const intervalMarkers: Date[] = []
+  for (let day = 0; day < daysRange; day++) {
+    for (let hour = 0; hour < 24; hour++) {
+      for (let halfHour = 0; halfHour < 2; halfHour++) {
+        const date = new Date(minDate)
+        date.setDate(date.getDate() + day)
+        date.setHours(hour, halfHour * 30, 0, 0)
+        intervalMarkers.push(date)
+      }
+    }
+  }
+
+  // Calculate position based on time intervals
+  const getDatePosition = (date: Date) => {
+    const timeDiff = date.getTime() - minDate.getTime()
+    const intervalsPassed = timeDiff / (30 * 60 * 1000)
+    return (intervalsPassed / totalIntervals) * 100
+  }
+
+  const formatDateLabel = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const compareDate = new Date(date)
+    compareDate.setHours(0, 0, 0, 0)
+    
+    if (compareDate.getTime() === today.getTime()) {
+      return { 
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        date: date.getDate().toString(),
+        month: date.toLocaleDateString('en-US', { month: 'short' }),
+        isToday: true 
+      }
+    }
+    
+    return {
+      day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      date: date.getDate().toString(),
+      month: date.toLocaleDateString('en-US', { month: 'short' }),
+      isToday: false
+    }
+  }
+
+  const rowHeight = 72
+  const sidebarWidth = 320
+  
+  const statusColors = {
+    'completed': { bg: 'bg-green-500', border: 'border-green-600', text: 'text-green-700' },
+    'in-progress': { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-blue-700' },
+    'cancelled': { bg: 'bg-red-500', border: 'border-red-600', text: 'text-red-700' },
+    'pending': { bg: 'bg-gray-400', border: 'border-gray-500', text: 'text-gray-700' }
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-200 space-y-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Driver Timeline View</h2>
+            <p className="text-sm text-gray-500">Visual timeline of assignments for each driver</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-xs">
+            <div className="font-semibold text-blue-900 mb-1">Timeline Info</div>
+            <div className="text-blue-700 space-y-0.5">
+              <div>Period: {minDate.toLocaleDateString()} - {effectiveMaxDate.toLocaleDateString()}</div>
+              <div>Days: {daysRange} | Drivers: {ganttRows.length}</div>
+              <div>Scale: Each column = 30 minutes</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Date Range Filter Controls */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">Date Range:</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDateRangeMode('all')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  dateRangeMode === 'all'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Show All
+              </button>
+              <button
+                onClick={() => setDateRangeMode('today')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  dateRangeMode === 'today'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setDateRangeMode('week')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  dateRangeMode === 'week'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                This Week
+              </button>
+              <button
+                onClick={() => setDateRangeMode('month')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  dateRangeMode === 'month'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                This Month
+              </button>
+              <button
+                onClick={() => setDateRangeMode('custom')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  dateRangeMode === 'custom'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Custom Range
+              </button>
+            </div>
+          </div>
+
+          {dateRangeMode === 'custom' && (
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-300">
+              <label className="text-sm text-gray-600">From:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <label className="text-sm text-gray-600">To:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+        </div>
+
+        {dateRangeMode !== 'all' && visibleAssignments.length < assignments.length && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 text-sm text-yellow-800">
+            <span className="font-medium">Showing {visibleAssignments.length} of {assignments.length} assignments</span> that overlap with the selected date range.
+          </div>
+        )}
+
+        {dateRangeMode !== 'all' && visibleAssignments.length === 0 && assignments.length > 0 && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-2 text-sm text-orange-800">
+            <span className="font-medium">No assignments found</span> in the selected date range. Try selecting a different range or click "Show All".
+          </div>
+        )}
+      </div>
+
+      {/* Gantt Chart Container */}
+      <div className="flex" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
+        {/* Fixed Left Sidebar */}
+        <div className="flex-shrink-0 border-r border-gray-200 bg-gray-50" style={{ width: `${sidebarWidth}px` }}>
+          <div className="sticky top-0 z-20 bg-gray-100 border-b border-gray-300 px-4 py-4">
+            <div className="text-sm font-semibold text-gray-700">
+              Drivers ({ganttRows.length})
+            </div>
+            <div className="text-[10px] text-gray-500 mt-1">
+              {visibleAssignments.length} assignment{visibleAssignments.length !== 1 ? 's' : ''} total
+            </div>
+          </div>
+
+          <div className="overflow-y-auto" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
+            {ganttRows.map((row) => {
+              const { driverId, driverName, assignments: driverAssignments } = row
+              const pendingCount = driverAssignments.filter(a => a.status === 'pending').length
+              const inProgressCount = driverAssignments.filter(a => a.status === 'in-progress').length
+              const completedCount = driverAssignments.filter(a => a.status === 'completed').length
+              
+              return (
+                <div
+                  key={driverId}
+                  className="border-b border-gray-200 px-4 py-4 hover:bg-gray-100 transition-colors"
+                  style={{ height: `${rowHeight}px` }}
+                >
+                  <div className="flex items-start gap-3 h-full">
+                    <FiUser className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-gray-900 truncate mb-1">
+                        {driverName}
+                      </h4>
+                      <p className="text-xs text-gray-600 mb-2">
+                        {driverAssignments.length} {driverAssignments.length === 1 ? 'assignment' : 'assignments'}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                        {pendingCount > 0 && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">
+                            {pendingCount} pending
+                          </span>
+                        )}
+                        {inProgressCount > 0 && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">
+                            {inProgressCount} in progress
+                          </span>
+                        )}
+                        {completedCount > 0 && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-green-100 text-green-700">
+                            {completedCount} done
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Scrollable Timeline Grid */}
+        <div className="flex-1 overflow-x-auto overflow-y-auto" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
+          {/* Three-Tier Timeline Header */}
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-300">
+            {/* Tier 1: Dates (Days) */}
+            <div className="flex border-b border-gray-300" style={{ minWidth: `${intervalMarkers.length * thirtyMinIntervalWidth}px` }}>
+              {dateGroups.map((group, index) => {
+                const label = formatDateLabel(group.date)
+                return (
+                  <div
+                    key={index}
+                    className="flex-shrink-0 border-r border-gray-300 px-2 py-2 flex flex-col items-center justify-center"
+                    style={{ 
+                      width: `${group.intervalCount * thirtyMinIntervalWidth}px`,
+                      backgroundColor: label.isToday ? '#EBF4FF' : '#F9FAFB'
+                    }}
+                  >
+                    <div className={`text-xs font-semibold ${label.isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                      {label.day}, {label.month} {label.date}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Tier 2: Hours */}
+            <div className="flex border-b border-gray-200" style={{ minWidth: `${intervalMarkers.length * thirtyMinIntervalWidth}px` }}>
+              {hourMarkers.map((marker, index) => (
+                <div
+                  key={index}
+                  className="flex-shrink-0 border-r border-gray-200 px-1 py-1 flex items-center justify-center bg-gray-50"
+                  style={{ width: `${thirtyMinIntervalWidth * 2}px` }}
+                >
+                  <div className="text-[11px] font-medium text-gray-600">
+                    {marker.hour.toString().padStart(2, '0')}:00
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tier 3: 30-Minute Intervals */}
+            <div className="flex relative" style={{ minWidth: `${intervalMarkers.length * thirtyMinIntervalWidth}px` }}>
+              {intervalMarkers.map((interval, index) => {
+                const minutes = interval.getMinutes()
+                const isCurrentTime = new Date().getHours() === interval.getHours() && 
+                                     new Date().getMinutes() >= minutes && 
+                                     new Date().getMinutes() < minutes + 30 &&
+                                     new Date().toDateString() === interval.toDateString()
+                
+                return (
+                  <div
+                    key={index}
+                    className={`flex-shrink-0 border-r border-gray-100 px-1 py-1.5 flex items-center justify-center ${
+                      isCurrentTime ? 'bg-blue-50' : 'bg-white'
+                    }`}
+                    style={{ width: `${thirtyMinIntervalWidth}px` }}
+                  >
+                    <div className={`text-[10px] ${isCurrentTime ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
+                      {minutes === 0 ? '00' : '30'}
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* Current Time Indicator Line */}
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-20 pointer-events-none"
+                style={{ left: `${getDatePosition(new Date())}%` }}
+              >
+                <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-blue-500 rounded-full shadow" />
+              </div>
+            </div>
+          </div>
+
+          {/* Assignment Rows with Gantt Bars */}
+          <div className="relative bg-white" style={{ minWidth: `${intervalMarkers.length * thirtyMinIntervalWidth}px` }}>
+            {/* Vertical Grid Lines */}
+            <div className="absolute inset-0 flex pointer-events-none">
+              {hourMarkers.map((_, index) => (
+                <div
+                  key={index}
+                  className="flex-shrink-0 border-r border-gray-200"
+                  style={{ width: `${thirtyMinIntervalWidth * 2}px` }}
+                />
+              ))}
+            </div>
+
+            <div className="absolute inset-0 flex pointer-events-none">
+              {intervalMarkers.map((_, index) => (
+                <div
+                  key={index}
+                  className="flex-shrink-0 border-r border-gray-50"
+                  style={{ width: `${thirtyMinIntervalWidth}px` }}
+                />
+              ))}
+            </div>
+
+            {/* Current Day Vertical Line */}
+            <div
+              className="absolute top-0 bottom-0 w-0.5 bg-blue-500/20 z-0 pointer-events-none"
+              style={{ left: `${getDatePosition(new Date())}%` }}
+            />
+
+            {/* Assignment Bars - Grouped by Driver */}
+            {ganttRows.map((row) => {
+              const { driverId, driverName, assignments: driverAssignments } = row
+              
+              return (
+                <div
+                  key={driverId}
+                  className="relative border-b border-gray-200"
+                  style={{ height: `${rowHeight}px` }}
+                >
+                  <div className="absolute inset-0 px-1">
+                    {driverAssignments.map((assignment) => {
+                      const startPos = getDatePosition(assignment.createdAt)
+                      const endPos = getDatePosition(assignment.dueDate)
+                      const width = Math.max(0.1, endPos - startPos)
+                      const colors = statusColors[assignment.status]
+                      
+                      return (
+                        <Link
+                          key={assignment.id}
+                          href={`/tasks?assignmentId=${assignment.id}`}
+                          className={`absolute group cursor-pointer ${colors.bg} ${colors.border} rounded-md h-10 shadow-sm hover:shadow-lg transition-all border-2 flex items-center px-3`}
+                          style={{
+                            left: `${startPos}%`,
+                            width: `${width}%`,
+                            minWidth: '120px',
+                            top: '50%',
+                            transform: 'translateY(-50%)'
+                          }}
+                          title={`${assignment.title} | ${assignment.createdAt.toLocaleString()} → ${assignment.dueDate.toLocaleString()}`}
+                        >
+                          <div className="flex items-center justify-center gap-2 flex-1 min-w-0">
+                            <span className="text-xs font-medium text-white truncate text-center">
+                              {assignment.title}
+                            </span>
+                            {assignment.priority === 'high' && (
+                              <span className="flex-shrink-0 w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse" />
+                            )}
+                          </div>
+
+                          {/* Tooltip on Hover */}
+                          <div className="absolute left-0 top-full mt-2 w-80 p-4 bg-gray-900 text-white text-xs rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                            <div className="space-y-2">
+                              {assignment.flightCode && (
+                                <div className="border-b border-gray-700 pb-2 mb-2">
+                                  <p className="font-bold text-sm text-blue-300">✈️ {assignment.flightCode}</p>
+                                  {(assignment.flightOrigin || assignment.flightDestination) && (
+                                    <p className="text-gray-400 text-[10px]">
+                                      {assignment.flightOrigin || '???'} → {assignment.flightDestination || '???'}
+                                      {assignment.planeType && ` | ${assignment.planeType}`}
+                                      {assignment.gate && ` | Gate ${assignment.gate}`}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-semibold text-sm text-white">{assignment.title}</p>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                  assignment.status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                                  assignment.status === 'in-progress' ? 'bg-blue-500/20 text-blue-300' :
+                                  assignment.status === 'cancelled' ? 'bg-red-500/20 text-red-300' :
+                                  'bg-gray-500/20 text-gray-300'
+                                }`}>
+                                  {assignment.status}
+                                </span>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                  assignment.priority === 'high' ? 'bg-red-500/20 text-red-300' :
+                                  assignment.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
+                                  'bg-gray-500/20 text-gray-300'
+                                }`}>
+                                  {assignment.priority}
+                                </span>
+                              </div>
+                              {assignment.description && <p className="text-gray-300 text-xs">{assignment.description}</p>}
+                            </div>
+                            <div className="space-y-2 text-gray-400 mt-3">
+                              <div className="flex items-center gap-2">
+                                <FiTruck className="h-3 w-3" />
+                                <span>Truck: {assignment.truck}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <FiMapPin className="h-3 w-3" />
+                                <span>From: {assignment.startLocation}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MdLocationOn className="h-3 w-3" />
+                                <span>To: {assignment.destination}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <FiClock className="h-3 w-3" />
+                                <span>Start: {assignment.createdAt.toLocaleDateString()} {assignment.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <FiClock className="h-3 w-3" />
+                                <span>Due: {assignment.dueDate.toLocaleDateString()} {assignment.dueDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                              <div className="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-500">
+                                <div className="flex items-center gap-2">
+                                  <FiActivity className="h-3 w-3" />
+                                  <span>Duration: {((assignment.dueDate.getTime() - assignment.createdAt.getTime()) / (1000 * 60 * 60)).toFixed(1)} hours</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {ganttRows.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          <FiUser className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+          <p>No drivers with assignments to display</p>
+          <p className="text-sm mt-2">Create assignments in the Tasks page to see them here</p>
+        </div>
+      )}
     </div>
   )
 }
