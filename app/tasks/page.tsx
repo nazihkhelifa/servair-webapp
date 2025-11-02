@@ -536,8 +536,8 @@ export default function TasksPage() {
       <main className="flex-1 p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="text-center mb-4">
+          <div className="flex items-center justify-between mb-6">
+            <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Tasks & Assignments</h1>
               <p className="text-gray-500">Manage your fleet operations</p>
             </div>
@@ -1495,7 +1495,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon,
       </div>
 
       {/* Gantt Chart Container */}
-      <div className="flex" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
+      <div className="flex" style={{ height: '70vh' }}>
         {/* Fixed Left Sidebar */}
         <div className="flex-shrink-0 border-r border-gray-200 bg-gray-50" style={{ width: `${sidebarWidth}px` }}>
            {/* Sidebar Header */}
@@ -1506,7 +1506,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon,
            </div>
 
           {/* Truck List */}
-          <div className="overflow-y-auto" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
+          <div className="overflow-y-auto flex-1" style={{ maxHeight: 'calc(70vh - 48px)' }}>
             {ganttRows.map((row) => {
               const { truckId, tasks: truckTasks } = row
               const truckInfo = availableTrucks.find(t => t.truckId === truckId)
@@ -1521,7 +1521,13 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon,
                   style={{ height: `${rowHeight}px` }}
                 >
                   <div className="flex items-start gap-2 h-full">
-                    <FiTruck className="h-4 w-4 text-gray-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center mt-0.5">
+                      <img 
+                        src="/truck.png" 
+                        alt="Truck" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                     <div className="flex-1 min-w-0">
                       {truckInfo?.type ? (
                         <p className="text-xs font-medium text-gray-900 truncate mb-0.5">
@@ -1540,7 +1546,7 @@ function TruckTimeline({ tasks, getStatusBadge, getPriorityBadge, getStatusIcon,
         </div>
 
         {/* Scrollable Timeline Grid */}
-        <div className="flex-1 overflow-x-auto overflow-y-auto" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
+        <div className="flex-1 overflow-x-auto overflow-y-auto" style={{ maxHeight: '70vh' }}>
           {/* Three-Tier Timeline Header */}
           <div className="sticky top-0 z-10 bg-white border-b border-gray-300">
             {/* Tier 1: Dates (Days) */}
