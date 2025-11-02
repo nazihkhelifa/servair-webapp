@@ -900,6 +900,13 @@ export default function TasksPage() {
                   return `${day} ${month} • ${hours}:${minutes}`
                 }
 
+                // Format time only
+                const formatTime = (date: Date) => {
+                  const hours = date.getHours().toString().padStart(2, '0')
+                  const minutes = date.getMinutes().toString().padStart(2, '0')
+                  return `${hours}:${minutes}`
+                }
+
                 // Calculate duration or show status
                 const duration = ((task.dueDate.getTime() - task.createdAt.getTime()) / (1000 * 60 * 60)).toFixed(1)
                 const statusText = task.status === 'completed' ? 'Completed' : 
@@ -909,57 +916,73 @@ export default function TasksPage() {
                 return (
                   <div 
                     key={task.id} 
-                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100"
+                    onClick={() => {
+                      setSelectedAssignment(task)
+                      setIsDetailDrawerOpen(true)
+                    }}
+                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100 cursor-pointer"
                   >
                     <div className="flex items-center gap-4 p-4">
-                      {/* Plane Icon */}
-                      <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-gray-50 rounded-xl">
-                        <MdFlight className="w-8 h-8 text-blue-600" />
+                      {/* Truck Image */}
+                      <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-white rounded-xl overflow-hidden border border-gray-200">
+                        <img 
+                          src="/truck.png" 
+                          alt="Truck" 
+                          className="w-full h-full object-contain p-2"
+                        />
                       </div>
 
                       {/* Main Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
+                            {/* Destination/Flight Code - Most Important */}
                             <h3 className="text-base font-semibold text-gray-900 mb-2 truncate">
                               {task.destination || task.title}
+                              {task.flightCode && ` • ${task.flightCode}`}
                             </h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                            
+                            {/* Start and End Location */}
+                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                               <div className="flex items-center gap-1">
-                                <FiClock className="w-3.5 h-3.5" />
-                                <span>{formatDate(task.createdAt)}</span>
+                                <FiMapPin className="w-3.5 h-3.5" />
+                                <span className="truncate">{task.startLocation || 'Base'}</span>
                               </div>
-                              <div className={`text-sm font-medium ${
-                                task.status === 'completed' ? 'text-green-600' :
-                                task.status === 'in-progress' ? 'text-blue-600' :
-                                task.status === 'cancelled' ? 'text-red-600' :
-                                'text-gray-600'
-                              }`}>
-                                {statusText}
+                              <FiArrowRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                              <div className="flex items-center gap-1">
+                                <MdLocationOn className="w-3.5 h-3.5" />
+                                <span className="truncate">{task.destination}</span>
                               </div>
                             </div>
-                            {task.flightCode && (
-                              <div className="mt-1.5 text-xs text-gray-500">
-                                Flight: {task.flightCode}
-                                {task.gate && ` • Gate ${task.gate}`}
+
+                            {/* Start and End Time */}
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-1.5">
+                              <div className="flex items-center gap-1">
+                                <FiClock className="w-3.5 h-3.5" />
+                                <span>Start: {formatTime(task.createdAt)}</span>
+                              </div>
+                              <span className="text-gray-400">•</span>
+                              <div className="flex items-center gap-1">
+                                <span>End: {formatTime(task.dueDate)}</span>
+                              </div>
+                            </div>
+
+                            {/* Gate - Additional context */}
+                            {task.gate && (
+                              <div className="text-xs text-gray-500 mb-1.5">
+                                Gate: {task.gate}
                               </div>
                             )}
-                          </div>
 
-                          {/* Action Buttons */}
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setSelectedAssignment(task)
-                                setIsDetailDrawerOpen(true)
-                              }}
-                              className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5"
-                              title="View details"
-                            >
-                              <FiEye className="w-3 h-3" />
-                              <span>View</span>
-                            </button>
+                            {/* Status - Current state */}
+                            <div className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
+                              task.status === 'completed' ? 'bg-green-100 text-green-700' :
+                              task.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                              task.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {statusText}
+                            </div>
                           </div>
                         </div>
                       </div>
