@@ -829,6 +829,9 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
   const [dateRangeMode, setDateRangeMode] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all')
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
+  const [selectedDrivers, setSelectedDrivers] = useState<Set<string>>(new Set())
+  const [showConflictsOnly, setShowConflictsOnly] = useState(false)
+  const [showFreeTime, setShowFreeTime] = useState(true)
 
   // Helper functions for status and priority badges
   const getStatusBadge = (status: Assignment['status']) => {
@@ -920,6 +923,64 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
       })
     : assignments
 
+  // Helper function to detect overlapping assignments
+  const detectOverlaps = (assignments: Assignment[]): Set<string> => {
+    const conflicts = new Set<string>()
+    for (let i = 0; i < assignments.length; i++) {
+      for (let j = i + 1; j < assignments.length; j++) {
+        const a1 = assignments[i]
+        const a2 = assignments[j]
+        // Check if assignments overlap (excluding completed/cancelled)
+        if (a1.status !== 'completed' && a1.status !== 'cancelled' &&
+            a2.status !== 'completed' && a2.status !== 'cancelled') {
+          const start1 = a1.createdAt.getTime()
+          const end1 = a1.dueDate.getTime()
+          const start2 = a2.createdAt.getTime()
+          const end2 = a2.dueDate.getTime()
+          
+          // Check overlap: start1 < end2 && start2 < end1
+          if (start1 < end2 && start2 < end1) {
+            conflicts.add(a1.id)
+            conflicts.add(a2.id)
+          }
+        }
+      }
+    }
+    return conflicts
+  }
+
+  // Helper to find free time gaps
+  const findFreeTimeGaps = (assignments: Assignment[], rangeStart: Date, rangeEnd: Date): Array<{start: Date, end: Date}> => {
+    if (assignments.length === 0) {
+      return [{ start: rangeStart, end: rangeEnd }]
+    }
+    
+    const gaps: Array<{start: Date, end: Date}> = []
+    const sorted = [...assignments].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    
+    // Check before first assignment
+    if (sorted[0].createdAt > rangeStart) {
+      gaps.push({ start: rangeStart, end: sorted[0].createdAt })
+    }
+    
+    // Check between assignments
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const currentEnd = sorted[i].dueDate
+      const nextStart = sorted[i + 1].createdAt
+      if (nextStart > currentEnd) {
+        gaps.push({ start: currentEnd, end: nextStart })
+      }
+    }
+    
+    // Check after last assignment
+    const lastEnd = sorted[sorted.length - 1].dueDate
+    if (lastEnd < rangeEnd) {
+      gaps.push({ start: lastEnd, end: rangeEnd })
+    }
+    
+    return gaps
+  }
+
   // Group assignments by driver (one row per driver)
   const assignmentsByDriver = visibleAssignments.reduce((acc, assignment) => {
     if (!assignment.driver || assignment.driver === 'Unassigned') return acc
@@ -931,17 +992,33 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
   }, {} as Record<string, Assignment[]>)
 
   // Create gantt rows - one per driver, but only for drivers that exist
-  const ganttRows: Array<{ driverId: string; driverName: string; assignments: Assignment[] }> = drivers
-    .filter(driver => assignmentsByDriver[driver.driverId] || assignmentsByDriver[driver.fullName])
+  let ganttRows: Array<{ 
+    driverId: string
+    driverName: string
+    assignments: Assignment[]
+    conflicts: Set<string>
+    driver: DriverRecord
+  }> = drivers
     .map(driver => {
-      const driverAssignments = assignmentsByDriver[driver.driverId] || assignmentsByDriver[driver.fullName] || []
+      const driverAssignments = (assignmentsByDriver[driver.driverId] || assignmentsByDriver[driver.fullName] || [])
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      const conflicts = detectOverlaps(driverAssignments)
+      
       return {
         driverId: driver.driverId,
         driverName: driver.fullName,
-        assignments: driverAssignments.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        assignments: driverAssignments,
+        conflicts,
+        driver
       }
     })
-    .filter(row => row.assignments.length > 0)
+    .filter(row => {
+      // Apply filters
+      if (showConflictsOnly && row.conflicts.size === 0) return false
+      if (selectedDrivers.size > 0 && !selectedDrivers.has(row.driverId)) return false
+      if (row.assignments.length === 0) return false
+      return true
+    })
     .sort((a, b) => a.driverName.localeCompare(b.driverName))
 
   // Get date range for timeline
@@ -1066,10 +1143,49 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
   const sidebarWidth = 320
   
   const statusColors = {
-    'completed': { bg: 'bg-green-500', border: 'border-green-600', text: 'text-green-700' },
-    'in-progress': { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-blue-700' },
-    'cancelled': { bg: 'bg-red-500', border: 'border-red-600', text: 'text-red-700' },
-    'pending': { bg: 'bg-gray-400', border: 'border-gray-500', text: 'text-gray-700' }
+    'completed': { 
+      bg: 'bg-gradient-to-r from-green-500 to-green-600', 
+      border: 'border-green-700', 
+      text: 'text-green-700',
+      shadow: 'shadow-green-500/30'
+    },
+    'in-progress': { 
+      bg: 'bg-gradient-to-r from-blue-500 to-blue-600', 
+      border: 'border-blue-700', 
+      text: 'text-blue-700',
+      shadow: 'shadow-blue-500/30'
+    },
+    'cancelled': { 
+      bg: 'bg-gradient-to-r from-red-500 to-red-600', 
+      border: 'border-red-700', 
+      text: 'text-red-700',
+      shadow: 'shadow-red-500/30'
+    },
+    'pending': { 
+      bg: 'bg-gradient-to-r from-gray-400 to-gray-500', 
+      border: 'border-gray-600', 
+      text: 'text-gray-700',
+      shadow: 'shadow-gray-500/30'
+    }
+  }
+
+  // Helper to check if date is weekend
+  const isWeekend = (date: Date) => {
+    const day = date.getDay()
+    return day === 0 || day === 6 // Sunday or Saturday
+  }
+
+  // Helper to get time of day zone color
+  const getTimeOfDayColor = (hour: number) => {
+    if (hour >= 6 && hour < 12) return 'bg-yellow-50/30' // Morning
+    if (hour >= 12 && hour < 18) return 'bg-orange-50/30' // Afternoon
+    if (hour >= 18 && hour < 22) return 'bg-pink-50/30' // Evening
+    return 'bg-indigo-50/30' // Night
+  }
+
+  // Helper to check if assignment is in the past
+  const isPast = (date: Date) => {
+    return date.getTime() < new Date().getTime()
   }
 
   return (
@@ -1081,18 +1197,11 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Driver Timeline View</h2>
             <p className="text-sm text-gray-500">Visual timeline of assignments for each driver</p>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-xs">
-            <div className="font-semibold text-blue-900 mb-1">Timeline Info</div>
-            <div className="text-blue-700 space-y-0.5">
-              <div>Period: {minDate.toLocaleDateString()} - {effectiveMaxDate.toLocaleDateString()}</div>
-              <div>Days: {daysRange} | Drivers: {ganttRows.length}</div>
-              <div>Scale: Each column = 30 minutes</div>
-            </div>
-          </div>
+         
         </div>
 
-        {/* Date Range Filter Controls */}
-        <div className="flex items-center gap-4 flex-wrap">
+        {/* Controls Bar */}
+        <div className="flex items-center gap-4 flex-wrap bg-gray-50 p-4 rounded-lg border border-gray-200">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700">Date Range:</span>
             <div className="flex gap-2">
@@ -1167,6 +1276,110 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
               />
             </div>
           )}
+
+          <div className="flex items-center gap-4 ml-auto border-l border-gray-300 pl-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showConflictsOnly}
+                onChange={(e) => setShowConflictsOnly(e.target.checked)}
+                className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Show Conflicts Only</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showFreeTime}
+                onChange={(e) => setShowFreeTime(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Show Free Time</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Driver Filter Sidebar */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-700">Filter Drivers</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedDrivers(new Set(drivers.map(d => d.driverId)))}
+                className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded"
+              >
+                Select All
+              </button>
+              <button
+                onClick={() => setSelectedDrivers(new Set())}
+                className="text-xs px-2 py-1 text-gray-600 hover:bg-gray-50 rounded"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+          <div className="max-h-40 overflow-y-auto space-y-2">
+            {drivers.map((driver) => {
+              const isSelected = selectedDrivers.size === 0 || selectedDrivers.has(driver.driverId)
+              const driverAssignments = assignments.filter(a => 
+                a.driver === driver.driverId || a.driver === driver.fullName
+              )
+              const hasConflicts = driverAssignments.some((a1, i) => 
+                driverAssignments.some((a2, j) => {
+                  if (i === j || a1.status === 'completed' || a1.status === 'cancelled' || 
+                      a2.status === 'completed' || a2.status === 'cancelled') return false
+                  const start1 = a1.createdAt.getTime()
+                  const end1 = a1.dueDate.getTime()
+                  const start2 = a2.createdAt.getTime()
+                  const end2 = a2.dueDate.getTime()
+                  return start1 < end2 && start2 < end1
+                })
+              )
+
+              return (
+                <label key={driver.driverId} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      const newSet = new Set(selectedDrivers)
+                      if (e.target.checked) {
+                        if (selectedDrivers.size === 0) {
+                          // First selection - select all except this one, then toggle this
+                          drivers.forEach(d => {
+                            if (d.driverId !== driver.driverId) newSet.add(d.driverId)
+                          })
+                        } else {
+                          newSet.delete(driver.driverId)
+                        }
+                      } else {
+                        newSet.add(driver.driverId)
+                      }
+                      setSelectedDrivers(newSet.size === drivers.length ? new Set() : newSet)
+                    }}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-900 truncate">{driver.fullName}</span>
+                      {hasConflicts && (
+                        <span className="flex-shrink-0 w-2 h-2 bg-red-500 rounded-full" title="Has conflicts" />
+                      )}
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${
+                        driver.currentStatus === 'Active' ? 'bg-green-100 text-green-700' :
+                        driver.currentStatus === 'Idle' ? 'bg-blue-100 text-blue-700' :
+                        driver.currentStatus === 'On Break' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {driver.currentStatus}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500">{driverAssignments.length} assignment{driverAssignments.length !== 1 ? 's' : ''}</span>
+                  </div>
+                </label>
+              )
+            })}
+          </div>
         </div>
 
         {dateRangeMode !== 'all' && visibleAssignments.length < assignments.length && (
@@ -1182,11 +1395,44 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
         )}
       </div>
 
+      {/* Status Legend */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+        <div className="flex items-center gap-6 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-gray-700">Legend:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gradient-to-r from-green-500 to-green-600 border-2 border-green-700 shadow-sm"></div>
+            <span className="text-xs text-gray-600">Completed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gradient-to-r from-blue-500 to-blue-600 border-2 border-blue-700 shadow-sm"></div>
+            <span className="text-xs text-gray-600">In Progress</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gradient-to-r from-gray-400 to-gray-500 border-2 border-gray-600 shadow-sm"></div>
+            <span className="text-xs text-gray-600">Pending</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gradient-to-r from-red-500 to-red-600 border-2 border-red-700 shadow-sm"></div>
+            <span className="text-xs text-gray-600">Cancelled</span>
+          </div>
+          <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-300">
+            <div className="w-4 h-2 rounded bg-green-50 border border-green-200 border-dashed"></div>
+            <span className="text-xs text-gray-600">Free Time</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200"></div>
+            <span className="text-xs text-gray-600">Weekend</span>
+          </div>
+        </div>
+      </div>
+
       {/* Gantt Chart Container */}
       <div className="flex" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
         {/* Fixed Left Sidebar */}
-        <div className="flex-shrink-0 border-r border-gray-200 bg-gray-50" style={{ width: `${sidebarWidth}px` }}>
-          <div className="sticky top-0 z-20 bg-gray-100 border-b border-gray-300 px-4 py-4">
+        <div className="flex-shrink-0 border-r border-gray-200 bg-gradient-to-b from-gray-50 to-white" style={{ width: `${sidebarWidth}px` }}>
+          <div className="sticky top-0 z-20 bg-gradient-to-r from-gray-100 to-gray-50 border-b border-gray-300 px-4 py-4 shadow-sm">
             <div className="text-sm font-semibold text-gray-700">
               Drivers ({ganttRows.length})
             </div>
@@ -1197,25 +1443,50 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
 
           <div className="overflow-y-auto" style={{ minHeight: '400px', maxHeight: 'calc(100vh - 420px)' }}>
             {ganttRows.map((row) => {
-              const { driverId, driverName, assignments: driverAssignments } = row
+              const { driverId, driverName, assignments: driverAssignments, conflicts, driver } = row
               const pendingCount = driverAssignments.filter(a => a.status === 'pending').length
               const inProgressCount = driverAssignments.filter(a => a.status === 'in-progress').length
               const completedCount = driverAssignments.filter(a => a.status === 'completed').length
+              const hasConflicts = conflicts.size > 0
               
               return (
                 <div
                   key={driverId}
-                  className="border-b border-gray-200 px-4 py-4 hover:bg-gray-100 transition-colors"
+                  className={`border-b border-gray-200 px-4 py-4 hover:bg-gray-100 transition-colors ${
+                    hasConflicts ? 'bg-red-50 border-red-200' : ''
+                  }`}
                   style={{ height: `${rowHeight}px` }}
                 >
-                  <div className="flex items-start gap-3 h-full">
-                    <FiUser className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+                  <div className="flex items-start gap-3 h-full relative">
+                    <div className="relative flex-shrink-0 mt-1">
+                      <div className="relative">
+                        <FiUser className="h-5 w-5 text-blue-600 drop-shadow-sm" />
+                        {hasConflicts && (
+                          <FiAlertCircle className="absolute -top-1 -right-1 h-3.5 w-3.5 text-red-600 bg-white rounded-full shadow-sm animate-pulse" />
+                        )}
+                      </div>
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-gray-900 truncate mb-1">
-                        {driverName}
-                      </h4>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-sm font-bold text-gray-900 truncate">
+                          {driverName}
+                        </h4>
+                        <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${
+                          driver.currentStatus === 'Active' ? 'bg-green-100 text-green-700' :
+                          driver.currentStatus === 'Idle' ? 'bg-blue-100 text-blue-700' :
+                          driver.currentStatus === 'On Break' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {driver.currentStatus}
+                        </span>
+                      </div>
                       <p className="text-xs text-gray-600 mb-2">
                         {driverAssignments.length} {driverAssignments.length === 1 ? 'assignment' : 'assignments'}
+                        {hasConflicts && (
+                          <span className="ml-2 text-red-600 font-semibold">
+                            • {conflicts.size} conflict{conflicts.size !== 1 ? 's' : ''}
+                          </span>
+                        )}
                       </p>
                       <div className="flex items-center gap-2 flex-wrap text-[10px]">
                         {pendingCount > 0 && (
@@ -1250,18 +1521,32 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
             <div className="flex border-b border-gray-300" style={{ minWidth: `${intervalMarkers.length * thirtyMinIntervalWidth}px` }}>
               {dateGroups.map((group, index) => {
                 const label = formatDateLabel(group.date)
+                const isWeekendDay = isWeekend(group.date)
                 return (
                   <div
                     key={index}
-                    className="flex-shrink-0 border-r border-gray-300 px-2 py-2 flex flex-col items-center justify-center"
+                    className={`flex-shrink-0 border-r border-gray-300 px-2 py-2 flex flex-col items-center justify-center relative ${
+                      label.isToday ? 'bg-gradient-to-b from-blue-100 to-blue-50' : 
+                      isWeekendDay ? 'bg-gradient-to-b from-purple-50 to-purple-100/50' :
+                      'bg-gradient-to-b from-gray-50 to-white'
+                    }`}
                     style={{ 
-                      width: `${group.intervalCount * thirtyMinIntervalWidth}px`,
-                      backgroundColor: label.isToday ? '#EBF4FF' : '#F9FAFB'
+                      width: `${group.intervalCount * thirtyMinIntervalWidth}px`
                     }}
                   >
-                    <div className={`text-xs font-semibold ${label.isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                    {label.isToday && (
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600" />
+                    )}
+                    <div className={`text-xs font-semibold ${
+                      label.isToday ? 'text-blue-700' : 
+                      isWeekendDay ? 'text-purple-700' :
+                      'text-gray-700'
+                    }`}>
                       {label.day}, {label.month} {label.date}
                     </div>
+                    {isWeekendDay && (
+                      <div className="text-[9px] text-purple-500 mt-0.5">Weekend</div>
+                    )}
                   </div>
                 )
               })}
@@ -1269,17 +1554,25 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
 
             {/* Tier 2: Hours */}
             <div className="flex border-b border-gray-200" style={{ minWidth: `${intervalMarkers.length * thirtyMinIntervalWidth}px` }}>
-              {hourMarkers.map((marker, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 border-r border-gray-200 px-1 py-1 flex items-center justify-center bg-gray-50"
-                  style={{ width: `${thirtyMinIntervalWidth * 2}px` }}
-                >
-                  <div className="text-[11px] font-medium text-gray-600">
-                    {marker.hour.toString().padStart(2, '0')}:00
+              {hourMarkers.map((marker, index) => {
+                const timeOfDayColor = getTimeOfDayColor(marker.hour)
+                const isMajorHour = marker.hour % 6 === 0 // Highlight every 6 hours
+                return (
+                  <div
+                    key={index}
+                    className={`flex-shrink-0 border-r border-gray-200 px-1 py-1 flex items-center justify-center ${timeOfDayColor} ${
+                      isMajorHour ? 'border-gray-300 font-bold' : ''
+                    }`}
+                    style={{ width: `${thirtyMinIntervalWidth * 2}px` }}
+                  >
+                    <div className={`text-[11px] font-medium ${
+                      isMajorHour ? 'text-gray-800' : 'text-gray-600'
+                    }`}>
+                      {marker.hour.toString().padStart(2, '0')}:00
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Tier 3: 30-Minute Intervals */}
@@ -1318,17 +1611,42 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
 
           {/* Assignment Rows with Gantt Bars */}
           <div className="relative bg-white" style={{ minWidth: `${intervalMarkers.length * thirtyMinIntervalWidth}px` }}>
-            {/* Vertical Grid Lines */}
+            {/* Time of Day Background Zones */}
             <div className="absolute inset-0 flex pointer-events-none">
-              {hourMarkers.map((_, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 border-r border-gray-200"
-                  style={{ width: `${thirtyMinIntervalWidth * 2}px` }}
-                />
-              ))}
+              {dateGroups.map((group, dayIndex) => {
+                return (
+                  <div key={dayIndex} className="flex" style={{ width: `${group.intervalCount * thirtyMinIntervalWidth}px` }}>
+                    {Array.from({ length: 24 }).map((_, hourIndex) => {
+                      const hour = hourIndex
+                      const timeOfDayColor = getTimeOfDayColor(hour)
+                      return (
+                        <div
+                          key={hourIndex}
+                          className={`flex-shrink-0 ${timeOfDayColor}`}
+                          style={{ width: `${thirtyMinIntervalWidth * 2}px` }}
+                        />
+                      )
+                    })}
+                  </div>
+                )
+              })}
             </div>
 
+            {/* Vertical Grid Lines - Hours */}
+            <div className="absolute inset-0 flex pointer-events-none">
+              {hourMarkers.map((_, index) => {
+                const isMajorHour = index % 6 === 0
+                return (
+                  <div
+                    key={index}
+                    className={`flex-shrink-0 border-r ${isMajorHour ? 'border-gray-300' : 'border-gray-200'}`}
+                    style={{ width: `${thirtyMinIntervalWidth * 2}px` }}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Vertical Grid Lines - 30 min intervals */}
             <div className="absolute inset-0 flex pointer-events-none">
               {intervalMarkers.map((_, index) => (
                 <div
@@ -1341,50 +1659,135 @@ function DriverTimeline({ drivers, assignments, isLoading }: DriverTimelineProps
 
             {/* Current Day Vertical Line */}
             <div
-              className="absolute top-0 bottom-0 w-0.5 bg-blue-500/20 z-0 pointer-events-none"
+              className="absolute top-0 bottom-0 w-1 bg-gradient-to-b from-blue-600 via-blue-500 to-blue-600 z-5 pointer-events-none shadow-lg"
               style={{ left: `${getDatePosition(new Date())}%` }}
-            />
+            >
+              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded font-semibold shadow-md">
+                NOW
+              </div>
+            </div>
+
+            {/* Weekend Vertical Lines */}
+            {dateGroups.map((group, index) => {
+              if (isWeekend(group.date)) {
+                return (
+                  <div
+                    key={`weekend-${index}`}
+                    className="absolute top-0 bottom-0 w-0.5 bg-purple-200/50 z-1 pointer-events-none"
+                    style={{ left: `${getDatePosition(group.date)}%` }}
+                  />
+                )
+              }
+              return null
+            })}
 
             {/* Assignment Bars - Grouped by Driver */}
             {ganttRows.map((row) => {
-              const { driverId, driverName, assignments: driverAssignments } = row
+              const { driverId, driverName, assignments: driverAssignments, conflicts } = row
+              
+              // Calculate free time gaps
+              const freeTimeGaps = showFreeTime 
+                ? findFreeTimeGaps(driverAssignments, minDate, effectiveMaxDate)
+                : []
               
               return (
                 <div
                   key={driverId}
-                  className="relative border-b border-gray-200"
+                  className="relative border-b border-gray-200 hover:bg-gray-50/50 transition-colors"
                   style={{ height: `${rowHeight}px` }}
                 >
+                  {/* Free Time Visualization */}
+                  {showFreeTime && freeTimeGaps.map((gap, idx) => {
+                    const startPos = getDatePosition(gap.start)
+                    const endPos = getDatePosition(gap.end)
+                    const width = Math.max(0.1, endPos - startPos)
+                    
+                    return (
+                      <div
+                        key={`free-${idx}`}
+                        className="absolute bg-green-50 border border-green-200 border-dashed opacity-40 rounded"
+                        style={{
+                          left: `${startPos}%`,
+                          width: `${width}%`,
+                          top: '30%',
+                          height: '40%',
+                          pointerEvents: 'none'
+                        }}
+                        title={`Free time: ${gap.start.toLocaleTimeString()} - ${gap.end.toLocaleTimeString()}`}
+                      />
+                    )
+                  })}
+
                   <div className="absolute inset-0 px-1">
-                    {driverAssignments.map((assignment) => {
+                    {driverAssignments.map((assignment, idx) => {
                       const startPos = getDatePosition(assignment.createdAt)
                       const endPos = getDatePosition(assignment.dueDate)
                       const width = Math.max(0.1, endPos - startPos)
                       const colors = statusColors[assignment.status]
+                      const hasConflict = conflicts.has(assignment.id)
+                      const isPastAssignment = isPast(assignment.createdAt)
+                      const assignmentDuration = assignment.dueDate.getTime() - assignment.createdAt.getTime()
+                      const hours = assignmentDuration / (1000 * 60 * 60)
+                      
+                      // Determine icon based on assignment type
+                      const getAssignmentIcon = () => {
+                        if (assignment.flightCode) return <FiUsers className="h-3 w-3" />
+                        if (assignment.priority === 'high') return <FiAlertCircle className="h-3 w-3" />
+                        return <FiClock className="h-3 w-3" />
+                      }
                       
                       return (
                         <Link
                           key={assignment.id}
                           href={`/tasks?assignmentId=${assignment.id}`}
-                          className={`absolute group cursor-pointer ${colors.bg} ${colors.border} rounded-md h-10 shadow-sm hover:shadow-lg transition-all border-2 flex items-center px-3`}
+                          className={`absolute group cursor-pointer ${colors.bg} ${colors.border} rounded-lg h-11 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all border-2 flex items-center px-3 ${
+                            hasConflict ? 'ring-2 ring-red-500 ring-offset-2 animate-pulse' : ''
+                          } ${isPastAssignment ? 'opacity-70' : 'opacity-100'}`}
                           style={{
                             left: `${startPos}%`,
                             width: `${width}%`,
                             minWidth: '120px',
                             top: '50%',
-                            transform: 'translateY(-50%)'
+                            transform: 'translateY(-50%)',
+                            zIndex: hasConflict ? 20 : (isPastAssignment ? 1 : 5),
+                            boxShadow: hasConflict ? `0 0 0 3px rgba(239, 68, 68, 0.3), 0 4px 6px -1px rgba(0, 0, 0, 0.1)` : undefined
                           }}
-                          title={`${assignment.title} | ${assignment.createdAt.toLocaleString()} → ${assignment.dueDate.toLocaleString()}`}
+                          title={`${assignment.title} | ${assignment.createdAt.toLocaleString()} → ${assignment.dueDate.toLocaleString()}${hasConflict ? ' ⚠️ CONFLICT' : ''}`}
+                          onContextMenu={(e) => {
+                            e.preventDefault()
+                            // Quick action menu could be added here
+                          }}
                         >
-                          <div className="flex items-center justify-center gap-2 flex-1 min-w-0">
-                            <span className="text-xs font-medium text-white truncate text-center">
-                              {assignment.title}
-                            </span>
-                            {assignment.priority === 'high' && (
-                              <span className="flex-shrink-0 w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse" />
-                            )}
+                          {/* Left accent bar for status */}
+                          <div className={`absolute left-0 top-0 bottom-0 w-1 ${colors.bg} rounded-l-lg`} />
+                          
+                          <div className="flex items-center justify-between gap-2 flex-1 min-w-0 pl-2">
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              {getAssignmentIcon()}
+                              <span className={`text-xs font-semibold text-white truncate ${
+                                width < 5 ? 'hidden' : ''
+                              }`}>
+                                {assignment.title}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {assignment.priority === 'high' && (
+                                <span className="flex-shrink-0 w-2 h-2 bg-yellow-300 rounded-full animate-pulse shadow-sm" />
+                              )}
+                              {hasConflict && (
+                                <FiAlertCircle className="flex-shrink-0 w-3.5 h-3.5 text-red-200 drop-shadow-sm" />
+                              )}
+                              {width > 8 && (
+                                <span className="text-[10px] text-white/80 font-medium">
+                                  {hours.toFixed(1)}h
+                                </span>
+                              )}
+                            </div>
                           </div>
-
+                          
+                          {/* Subtle gradient overlay for depth */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-lg pointer-events-none" />
+                          
                           {/* Tooltip on Hover */}
                           <div className="absolute left-0 top-full mt-2 w-80 p-4 bg-gray-900 text-white text-xs rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
                             <div className="space-y-2">

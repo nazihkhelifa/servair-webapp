@@ -14,7 +14,10 @@ import {
   FiActivity,
   FiMap,
   FiNavigation,
-  FiFlag
+  FiFlag,
+  FiEdit2,
+  FiSave,
+  FiXCircle
 } from 'react-icons/fi'
 import { MdLocationOn, MdFlight } from 'react-icons/md'
 
@@ -57,19 +60,86 @@ interface AssignmentDetailDrawerProps {
   isOpen: boolean
   onClose: () => void
   assignment: Assignment | null
+  onUpdate?: (updatedAssignment: Assignment) => void
+  availableTrucks?: any[]
+  availableDrivers?: any[]
+  availableFlights?: any[]
+  startLocations?: any[]
+  destinationLocations?: any[]
 }
 
-export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: AssignmentDetailDrawerProps) {
+export default function AssignmentDetailDrawer({ 
+  isOpen, 
+  onClose, 
+  assignment,
+  onUpdate,
+  availableTrucks = [],
+  availableDrivers = [],
+  availableFlights = [],
+  startLocations = [],
+  destinationLocations = []
+}: AssignmentDetailDrawerProps) {
   const router = useRouter()
   const [startLocationData, setStartLocationData] = useState<Location | null>(null)
   const [destinationData, setDestinationData] = useState<Location | null>(null)
   const [distance, setDistance] = useState<number | null>(null)
   const [eta, setEta] = useState<string | null>(null)
   const [isLoadingLocations, setIsLoadingLocations] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: '',
+    truck: '',
+    driver: '',
+    airport: 'CDG' as 'CDG' | 'ORY',
+    startLocation: '',
+    destination: '',
+    description: '',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    status: 'pending' as 'pending' | 'in-progress' | 'completed' | 'cancelled',
+    startDate: '',
+    startTime: '',
+    dueDate: '',
+    dueTime: '',
+    flightCode: '',
+    flightOrigin: '',
+    flightDestination: '',
+    theoreticalHour: '',
+    planeType: '',
+    gate: ''
+  })
 
   useEffect(() => {
     if (isOpen && assignment) {
       loadLocationData()
+      // Initialize edit form with assignment data
+      const startDate = assignment.startDate || assignment.createdAt.toISOString().split('T')[0]
+      const startTime = assignment.startTime || assignment.createdAt.toTimeString().slice(0, 5)
+      const dueDate = assignment.dueDateOnly || assignment.dueDate.toISOString().split('T')[0]
+      const dueTime = assignment.dueTime || assignment.dueDate.toTimeString().slice(0, 5)
+      
+      setEditForm({
+        title: assignment.title,
+        truck: assignment.truck,
+        driver: assignment.driver,
+        airport: assignment.airport as 'CDG' | 'ORY',
+        startLocation: assignment.startLocation,
+        destination: assignment.destination,
+        description: assignment.description || '',
+        priority: assignment.priority,
+        status: assignment.status,
+        startDate,
+        startTime,
+        dueDate,
+        dueTime,
+        flightCode: assignment.flightCode || '',
+        flightOrigin: assignment.flightOrigin || '',
+        flightDestination: assignment.flightDestination || '',
+        theoreticalHour: assignment.theoreticalHour || '',
+        planeType: assignment.planeType || '',
+        gate: assignment.gate || ''
+      })
+      setIsEditMode(false)
     }
   }, [isOpen, assignment])
 
@@ -144,6 +214,87 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
     router.push(`/map?assignmentId=${assignment.id}`)
   }
 
+  const handleSave = async () => {
+    if (!assignment || !onUpdate) return
+    
+    // Validate required fields
+    if (!editForm.title || !editForm.truck || !editForm.destination || !editForm.startDate || !editForm.dueDate) {
+      alert('Please fill in all required fields')
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      // Parse dates and times
+      const startDateTime = new Date(`${editForm.startDate}T${editForm.startTime || '09:00'}`)
+      const dueDateTime = new Date(`${editForm.dueDate}T${editForm.dueTime || '17:00'}`)
+      
+      // Prepare update data
+      const updateData = {
+        id: assignment.id,
+        title: editForm.title,
+        truck: editForm.truck,
+        driver: editForm.driver || 'Unassigned',
+        startLocation: editForm.startLocation || 'Base',
+        destination: editForm.destination,
+        description: editForm.description || 'No description provided',
+        priority: editForm.priority,
+        status: editForm.status,
+        airport: editForm.airport,
+        // Combined datetime fields
+        createdAt: startDateTime.toISOString(),
+        dueDate: dueDateTime.toISOString(),
+        // Separate date and time fields
+        startDate: editForm.startDate,
+        startTime: editForm.startTime || '09:00',
+        dueDateOnly: editForm.dueDate,
+        dueTime: editForm.dueTime || '17:00',
+        // Flight information
+        flightCode: editForm.flightCode || null,
+        flightOrigin: editForm.flightOrigin || null,
+        flightDestination: editForm.flightDestination || null,
+        theoreticalHour: editForm.theoreticalHour || null,
+        planeType: editForm.planeType || null,
+        gate: editForm.gate || null
+      }
+      
+      const response = await fetch('/api/assignments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update assignment')
+      }
+      
+      const result = await response.json()
+      
+      // Convert to Assignment format and call onUpdate
+      const updatedAssignment: Assignment = {
+        ...assignment,
+        ...updateData,
+        createdAt: startDateTime,
+        dueDate: dueDateTime,
+        flightCode: updateData.flightCode || undefined,
+        flightOrigin: updateData.flightOrigin || undefined,
+        flightDestination: updateData.flightDestination || undefined,
+        theoreticalHour: updateData.theoreticalHour || undefined,
+        planeType: updateData.planeType || undefined,
+        gate: updateData.gate || undefined
+      }
+      
+      onUpdate(updatedAssignment)
+      setIsEditMode(false)
+    } catch (error: any) {
+      console.error('Error updating assignment:', error)
+      alert(`Error updating assignment: ${error.message}`)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -205,27 +356,357 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
               </div>
               <p className="text-gray-500 text-sm ml-[52px]">Assignment #{assignment.id.slice(0, 8)}</p>
             </div>
-            <button
-              onClick={onClose}
-              className="ml-4 p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-gray-900 active:scale-95"
-            >
-              <FiX className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {!isEditMode ? (
+                <button
+                  onClick={() => setIsEditMode(true)}
+                  className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-blue-600 active:scale-95"
+                  title="Edit assignment"
+                >
+                  <FiEdit2 className="h-5 w-5" />
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="p-2.5 hover:bg-blue-100/80 active:bg-blue-200/80 rounded-xl apple-transition text-blue-600 hover:text-blue-700 active:scale-95 disabled:opacity-50"
+                    title="Save changes"
+                  >
+                    <FiSave className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setIsEditMode(false)}
+                    disabled={isSaving}
+                    className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-gray-900 active:scale-95 disabled:opacity-50"
+                    title="Cancel editing"
+                  >
+                    <FiXCircle className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2.5 hover:bg-gray-100/80 active:bg-gray-200/80 rounded-xl apple-transition text-gray-500 hover:text-gray-900 active:scale-95"
+              >
+                <FiX className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           {/* Status and Priority Badges */}
-          <div className="flex gap-2.5">
-            <span className={`px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide ${getStatusBadge(assignment.status)} shadow-sm`}>
-              {assignment.status.toUpperCase()}
-            </span>
-            <span className={`px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide ${getPriorityBadge(assignment.priority)} shadow-sm`}>
-              {assignment.priority.toUpperCase()} PRIORITY
-            </span>
-          </div>
+          {!isEditMode ? (
+            <div className="flex gap-2.5">
+              <span className={`px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide ${getStatusBadge(assignment.status)} shadow-sm`}>
+                {assignment.status.toUpperCase()}
+              </span>
+              <span className={`px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide ${getPriorityBadge(assignment.priority)} shadow-sm`}>
+                {assignment.priority.toUpperCase()} PRIORITY
+              </span>
+            </div>
+          ) : (
+            <div className="flex gap-2.5">
+              <select
+                value={editForm.status}
+                onChange={(e) => setEditForm({...editForm, status: e.target.value as any})}
+                className="px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="pending">PENDING</option>
+                <option value="in-progress">IN PROGRESS</option>
+                <option value="completed">COMPLETED</option>
+                <option value="cancelled">CANCELLED</option>
+              </select>
+              <select
+                value={editForm.priority}
+                onChange={(e) => setEditForm({...editForm, priority: e.target.value as any})}
+                className="px-4 py-2 rounded-2xl text-xs font-semibold tracking-wide border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="low">LOW PRIORITY</option>
+                <option value="medium">MEDIUM PRIORITY</option>
+                <option value="high">HIGH PRIORITY</option>
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="p-8 space-y-5">
+          {isEditMode ? (
+            /* Edit Form */
+            <div className="space-y-5">
+              {/* Basic Information */}
+              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+                  <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                    <input
+                      type="text"
+                      value={editForm.title}
+                      onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      value={editForm.description}
+                      onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Truck *</label>
+                      <select
+                        value={editForm.truck}
+                        onChange={(e) => setEditForm({...editForm, truck: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">Select truck</option>
+                        {availableTrucks.map((truck) => (
+                          <option key={truck.truckId || truck.id} value={truck.truckId || truck.id}>
+                            {truck.truckId || truck.name || truck.id}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Driver</label>
+                      <select
+                        value={editForm.driver}
+                        onChange={(e) => setEditForm({...editForm, driver: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Unassigned</option>
+                        {availableDrivers.map((driver) => (
+                          <option key={driver.driverId || driver.id} value={driver.driverId || driver.fullName || driver.id}>
+                            {driver.fullName || driver.name || driver.id}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Airport</label>
+                    <select
+                      value={editForm.airport}
+                      onChange={(e) => setEditForm({...editForm, airport: e.target.value as 'CDG' | 'ORY'})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="CDG">CDG - Charles de Gaulle</option>
+                      <option value="ORY">ORY - Orly</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Route Information */}
+              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                    <FiNavigation className="h-5 w-5" />
+                    Route Details
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Location</label>
+                    <select
+                      value={editForm.startLocation}
+                      onChange={(e) => setEditForm({...editForm, startLocation: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select location</option>
+                      {startLocations.map((loc) => (
+                        <option key={loc.id || loc.locationId} value={loc.name}>
+                          {loc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Destination *</label>
+                    <select
+                      value={editForm.destination}
+                      onChange={(e) => setEditForm({...editForm, destination: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select destination</option>
+                      {destinationLocations.map((loc) => (
+                        <option key={loc.id || loc.locationId} value={loc.name}>
+                          {loc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Time Information */}
+              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                    <FiCalendar className="h-5 w-5" />
+                    Schedule
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+                      <input
+                        type="date"
+                        value={editForm.startDate}
+                        onChange={(e) => setEditForm({...editForm, startDate: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                      <input
+                        type="time"
+                        value={editForm.startTime}
+                        onChange={(e) => setEditForm({...editForm, startTime: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Due Date *</label>
+                      <input
+                        type="date"
+                        value={editForm.dueDate}
+                        onChange={(e) => setEditForm({...editForm, dueDate: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Due Time</label>
+                      <input
+                        type="time"
+                        value={editForm.dueTime}
+                        onChange={(e) => setEditForm({...editForm, dueTime: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Flight Information */}
+              <div className="glass-card rounded-3xl apple-shadow overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-100/50 bg-white/50">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+                    <MdFlight className="h-5 w-5" />
+                    Flight Information (Optional)
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Flight Code</label>
+                      <input
+                        type="text"
+                        value={editForm.flightCode}
+                        onChange={(e) => setEditForm({...editForm, flightCode: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Gate</label>
+                      <input
+                        type="text"
+                        value={editForm.gate}
+                        onChange={(e) => setEditForm({...editForm, gate: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Origin</label>
+                      <input
+                        type="text"
+                        value={editForm.flightOrigin}
+                        onChange={(e) => setEditForm({...editForm, flightOrigin: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                      <input
+                        type="text"
+                        value={editForm.flightDestination}
+                        onChange={(e) => setEditForm({...editForm, flightDestination: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Time</label>
+                      <input
+                        type="text"
+                        value={editForm.theoreticalHour}
+                        onChange={(e) => setEditForm({...editForm, theoreticalHour: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="HH:MM"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Aircraft Type</label>
+                      <input
+                        type="text"
+                        value={editForm.planeType}
+                        onChange={(e) => setEditForm({...editForm, planeType: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiSave className="h-5 w-5" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setIsEditMode(false)}
+                  disabled={isSaving}
+                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* View Mode - Original Content */
+            <>
           {/* Quick Actions */}
           <div className="glass-card rounded-3xl apple-shadow p-5">
             <button
@@ -454,6 +935,8 @@ export default function AssignmentDetailDrawer({ isOpen, onClose, assignment }: 
               })}
             </p>
           </div>
+            </>
+          )}
         </div>
       </div>
     </>

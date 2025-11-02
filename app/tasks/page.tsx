@@ -14,8 +14,12 @@ import {
   FiEdit,
   FiList,
   FiCalendar,
-  FiActivity
+  FiActivity,
+  FiHelpCircle,
+  FiEye,
+  FiRotateCw
 } from 'react-icons/fi'
+import { MdFlight } from 'react-icons/md'
 import { MdLocationOn } from 'react-icons/md'
 import Link from 'next/link'
 import VerticalSidebar from '../../components/VerticalSidebar'
@@ -884,106 +888,107 @@ export default function TasksPage() {
               </p>
             </div>
           ) : viewMode === 'list' ? (
-            <div className="space-y-4">
-              {filteredTasks.map((task) => (
-                <div 
-                  key={task.id} 
-                  onClick={() => {
-                    setSelectedAssignment(task)
-                    setIsDetailDrawerOpen(true)
-                  }}
-                  className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        {getStatusIcon(task.status)}
-                        <h3 className="text-lg font-semibold text-gray-900">{task.title}</h3>
-                        {task.flightCode && (
-                          <Link 
-                            href="/flights" 
-                            onClick={(e) => e.stopPropagation()}
-                            className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors flex items-center gap-1"
-                          >
-                            ✈️ {task.flightCode}
-                          </Link>
-                        )}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(task.status)}`}>
-                          {task.status.toUpperCase()}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityBadge(task.priority)}`}>
-                          {task.priority.toUpperCase()}
-                        </span>
+            <div className="grid gap-5 grid-cols-1 w-full">
+              {filteredTasks.map((task) => {
+                // Format date like "30 Sep • 9:57"
+                const formatDate = (date: Date) => {
+                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                  const day = date.getDate()
+                  const month = months[date.getMonth()]
+                  const hours = date.getHours().toString().padStart(2, '0')
+                  const minutes = date.getMinutes().toString().padStart(2, '0')
+                  return `${day} ${month} • ${hours}:${minutes}`
+                }
+
+                // Calculate duration or show status
+                const duration = ((task.dueDate.getTime() - task.createdAt.getTime()) / (1000 * 60 * 60)).toFixed(1)
+                const statusText = task.status === 'completed' ? 'Completed' : 
+                                 task.status === 'in-progress' ? 'In Progress' :
+                                 task.status === 'cancelled' ? 'Cancelled' : 'Pending'
+                
+                return (
+                  <div 
+                    key={task.id} 
+                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border border-gray-100"
+                  >
+                    <div className="flex items-center gap-4 p-4">
+                      {/* Plane Icon */}
+                      <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center bg-gray-50 rounded-xl">
+                        <MdFlight className="w-8 h-8 text-blue-600" />
                       </div>
-                      <p className="text-gray-600 mb-3">{task.description}</p>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <div className="flex items-center gap-2 text-sm">
-                          <FiTruck className="h-4 w-4 text-gray-400" />
-                          <Link 
-                            href="/trucks" 
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
-                          >
-                            {task.truck}
-                          </Link>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <FiUsers className="h-4 w-4 text-gray-400" />
-                          <Link 
-                            href="/drivers" 
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
-                          >
-                            {task.driver}
-                          </Link>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <FiMapPin className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">From: {task.startLocation}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <MdLocationOn className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-600">To: {task.destination}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <FiClock className="h-4 w-4" />
-                          <span>Due: {task.dueDate.toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          {task.routeStatus === 'ready' && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                              {(() => {
-                                const r = routeByAssignmentId[task.id]
-                                const etaM = r?.eta?.totalMinutes ?? task.etaMinutes ?? null
-                                const distM = r?.totalDistanceMeters ?? task.totalDistanceMeters ?? null
-                                const etaText = etaM != null ? Math.round(etaM) + 'm' : '—'
-                                const distText = distM != null ? (distM/1000).toFixed(1) + ' km' : '—'
-                                return `ETA: ${etaText} · ${distText}`
-                              })()}
-                            </span>
-                          )}
-                          {task.routeStatus === 'pending' && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">Route pending…</span>
-                          )}
-                          {task.routeStatus === 'error' && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Route error</span>
-                          )}
+
+                      {/* Main Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-semibold text-gray-900 mb-2 truncate">
+                              {task.destination || task.title}
+                            </h3>
+                            <div className="flex items-center gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <FiClock className="w-3.5 h-3.5" />
+                                <span>{formatDate(task.createdAt)}</span>
+                              </div>
+                              <div className={`text-sm font-medium ${
+                                task.status === 'completed' ? 'text-green-600' :
+                                task.status === 'in-progress' ? 'text-blue-600' :
+                                task.status === 'cancelled' ? 'text-red-600' :
+                                'text-gray-600'
+                              }`}>
+                                {statusText}
+                              </div>
+                            </div>
+                            {task.flightCode && (
+                              <div className="mt-1.5 text-xs text-gray-500">
+                                Flight: {task.flightCode}
+                                {task.gate && ` • Gate ${task.gate}`}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedAssignment(task)
+                                setIsDetailDrawerOpen(true)
+                              }}
+                              className="px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                              title="View details"
+                            >
+                              <FiEye className="w-3 h-3" />
+                              <span>View</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // Edit functionality can be added here
-                      }}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      <FiEdit className="h-5 w-5 text-gray-600" />
-                    </button>
+
+                    {/* Additional Info Row - Hidden by default, can expand */}
+                    <div className="px-4 pb-4 border-t border-gray-100 pt-3 hidden">
+                      <div className="flex items-center gap-6 text-xs text-gray-500">
+                        <div className="flex items-center gap-1.5">
+                          <FiTruck className="w-3.5 h-3.5" />
+                          <span>{task.truck}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <FiUsers className="w-3.5 h-3.5" />
+                          <span>{task.driver || 'Unassigned'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <FiMapPin className="w-3.5 h-3.5" />
+                          <span>{task.startLocation} → {task.destination}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <FiActivity className="w-3.5 h-3.5" />
+                          <span>Duration: {duration}h</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <TruckTimeline tasks={filteredTasks} getStatusBadge={getStatusBadge} getPriorityBadge={getPriorityBadge} getStatusIcon={getStatusIcon} />
@@ -999,6 +1004,41 @@ export default function TasksPage() {
           setSelectedAssignment(null)
         }}
         assignment={selectedAssignment}
+        onUpdate={(updatedAssignment) => {
+          // Update the task in the local state
+          setTasks(tasks.map(task => 
+            task.id === updatedAssignment.id 
+              ? {
+                  ...task,
+                  ...updatedAssignment,
+                  createdAt: updatedAssignment.createdAt instanceof Date 
+                    ? updatedAssignment.createdAt 
+                    : new Date(updatedAssignment.createdAt),
+                  dueDate: updatedAssignment.dueDate instanceof Date 
+                    ? updatedAssignment.dueDate 
+                    : new Date(updatedAssignment.dueDate)
+                }
+              : task
+          ))
+          // Update selected assignment if it's the same one
+          if (selectedAssignment && selectedAssignment.id === updatedAssignment.id) {
+            setSelectedAssignment({
+              ...selectedAssignment,
+              ...updatedAssignment,
+              createdAt: updatedAssignment.createdAt instanceof Date 
+                ? updatedAssignment.createdAt 
+                : new Date(updatedAssignment.createdAt),
+              dueDate: updatedAssignment.dueDate instanceof Date 
+                ? updatedAssignment.dueDate 
+                : new Date(updatedAssignment.dueDate)
+            })
+          }
+        }}
+        availableTrucks={availableTrucks}
+        availableDrivers={availableDrivers}
+        availableFlights={availableFlights}
+        startLocations={startLocations}
+        destinationLocations={destinationLocations}
       />
     </div>
   )
